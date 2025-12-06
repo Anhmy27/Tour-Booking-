@@ -8,6 +8,31 @@ import {
   ArrowRightOnRectangleIcon,
   ChartBarIcon,
 } from "@heroicons/react/24/outline";
+import { useAuthContext } from "../../contexts/AuthContext";
+
+const LogoutButton = () => {
+  const { logout } = useAuthContext();
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Force redirect even on error
+      window.location.href = "/";
+    }
+  };
+
+  return (
+    <button
+      onClick={handleLogout}
+      className="flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 rounded-lg mt-4"
+    >
+      <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3 text-red-500" />
+      Đăng Xuất
+    </button>
+  );
+};
 
 const navigation = [
   { name: "Dashboard", href: "/partner/dashboard", icon: HomeIcon },
@@ -103,16 +128,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
         })}
 
         {/* Đăng xuất */}
-        <button
-          onClick={() => {
-            localStorage.removeItem("token");
-            window.location.href = "/";
-          }}
-          className="flex items-center px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-100 rounded-lg mt-4"
-        >
-          <ArrowRightOnRectangleIcon className="w-5 h-5 mr-3 text-red-500" />
-          Đăng Xuất
-        </button>
+        <LogoutButton />
       </nav>
     </aside>
   );

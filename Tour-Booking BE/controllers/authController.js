@@ -52,14 +52,20 @@ const signToken = (id) => {
 const createSendToken = (user, statusCode, req, res) => {
   const token = signToken(user._id);
 
-  res.cookie("jwt", token, {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-    ),
+  // Nếu muốn session cookie (xóa khi đóng browser), bỏ expires
+  // Nếu muốn persistent cookie (lưu lâu dài), dùng expires
+  const cookieOptions = {
     httpOnly: true,
     secure: req.secure || req.headers["x-forwarded-proto"] === "https",
     sameSite: "Lax",
-  });
+  };
+
+  // Uncomment dòng dưới nếu muốn cookie lưu lâu dài (không xóa khi đóng browser)
+  // cookieOptions.expires = new Date(
+  //   Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+  // );
+
+  res.cookie("jwt", token, cookieOptions);
 
   // Remove password from output
   user.password = undefined;
@@ -115,9 +121,12 @@ exports.login = catchAsync(async (req, res, next) => {
 });
 
 exports.logout = (req, res) => {
-  res.cookie("jwt", "loggedout", {
-    expires: new Date(Date.now() + 10 * 1000),
+  // Xóa cookie bằng cách clearCookie
+  res.clearCookie("jwt", {
     httpOnly: true,
+    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+    sameSite: "Lax",
+    path: "/",
   });
   res.status(200).json({ status: "success" });
 };
@@ -139,7 +148,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     token = req.cookies.jwt;
   }
 
-  if (!token) {
+  if (!token || token === "loggedout" || token === "") {
     return next(new AppError("Xin hãy đăng nhập để thực hiện hành động.", 401));
   }
 

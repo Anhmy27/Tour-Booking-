@@ -16,13 +16,16 @@ const ResetPasswordForm = lazy(
   () => import("../components/auth/ResetPasswordForm")
 );
 const UserProfile = lazy(() => import("../pages/UserProfile"));
+
 const PaymentReturn = lazy(() => import("../pages/PaymentReturn"));
+
+const RoleRedirect = lazy(() => import("../components/RoleRedirect"));
 
 const customerRoutes = {
   path: "/",
   element: <CustomerLayout />,
   children: [
-    { index: true, element: <HomePage /> },
+    { index: true, element: <RoleRedirect><HomePage /></RoleRedirect> },
     { path: "tour-detail/:slug", element: <TourDetailPage /> },
     { path: "login", element: <LoginForm /> },
     { path: "register", element: <SignUpForm /> },

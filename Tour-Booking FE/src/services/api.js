@@ -6,11 +6,20 @@ axios.interceptors.response.use(
   (error) => {
     if (error.response && error.response.status === 401) {
       const errorMessage = error.response.data?.message || "";
+      const currentPath = window.location.pathname;
+      
+      // Chỉ redirect nếu KHÔNG phải đang ở trang login/signup
       if (
-        errorMessage.includes("Token expired") ||
-        errorMessage.includes("Invalid token")
+        (errorMessage.includes("Token expired") ||
+        errorMessage.includes("Invalid token")) &&
+        currentPath !== "/login" &&
+        currentPath !== "/signup" &&
+        currentPath !== "/forgot-password" &&
+        currentPath !== "/reset-password"
       ) {
-        localStorage.removeItem("user");
+        // Xóa toàn bộ dữ liệu lưu trữ
+        localStorage.clear();
+        sessionStorage.clear();
         window.location.href = "/login";
       }
     }
