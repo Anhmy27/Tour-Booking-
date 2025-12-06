@@ -277,6 +277,12 @@ exports.getTourBySlug = catchAsync(async (req, res, next) => {
     imageCover: tour.imageCover,
     images: tour.images,
     startDates: tour.startDates,
+    startLocation: tour.startLocation ? {
+      type: tour.startLocation.type,
+      coordinates: tour.startLocation.coordinates,
+      address: tour.startLocation.address,
+      description: tour.startLocation.description,
+    } : null,
     locations: tour.locations.map((loc) => ({
       type: loc.type,
       coordinates: loc.coordinates,

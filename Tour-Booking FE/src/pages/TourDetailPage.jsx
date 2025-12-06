@@ -70,6 +70,7 @@ const TourDetailPage = () => {
 
       <MapLocation
         locations={tour?.locations || TOUR_SAMPLE.locations}
+        startLocation={tour?.startLocation}
         selectedLocation={selectedLocation}
       />
       <TourReviews tourId={tour?._id} />
