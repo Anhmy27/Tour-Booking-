@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   HomeIcon,
   UserGroupIcon,
@@ -10,7 +10,7 @@ import {
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
 } from "@heroicons/react/24/outline";
-import { authService } from "../../services/api";
+import { useAuthContext } from "../../contexts/AuthContext";
 
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: HomeIcon },
@@ -24,17 +24,13 @@ const navigation = [
 
 const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {
   const location = useLocation();
-  const navigate = useNavigate();
+  const { logout } = useAuthContext();
 
   const handleLogout = async () => {
     try {
-      await authService.logout();
-      // Redirect to login page after successful logout
-      navigate("/login");
+      await logout();
     } catch (error) {
       console.error("Logout failed:", error);
-      // Even if logout fails, redirect to login page
-      navigate("/login");
     }
   };
 

@@ -15,9 +15,16 @@ export const AuthProvider = ({ children }) => {
         const user = res.data.data.data;
         if (user) {
           setUser(user);
+          // Set flag để biết user đang đăng nhập
+          sessionStorage.setItem("isAuthenticated", "true");
         }
+      } catch (error) {
+        // Nếu lỗi (chưa đăng nhập), set user = null
+        setUser(null);
+        sessionStorage.removeItem("isAuthenticated");
+      } finally {
         setLoading(false);
-      } catch (error) {}
+      }
     }
     fetchUser();
   }, []);
@@ -27,6 +34,7 @@ export const AuthProvider = ({ children }) => {
       const res = await authService.login(email, password);
       if (res.data.status === "success") {
         setUser(res.data.data.user);
+        sessionStorage.setItem("isAuthenticated", "true");
         return res.data.data.user;
       }
     } catch (err) {
@@ -55,9 +63,17 @@ export const AuthProvider = ({ children }) => {
     try {
       await authService.logout();
       setUser(null);
-      navigate("/");
+      // Xóa toàn bộ dữ liệu lưu trữ
+      localStorage.clear();
+      sessionStorage.clear();
+      navigate("/login", { replace: true });
       return true;
     } catch (err) {
+      // Ngay cả khi API fail, vẫn xóa dữ liệu local
+      setUser(null);
+      localStorage.clear();
+      sessionStorage.clear();
+      navigate("/login", { replace: true });
       throw new Error("Không thể đăng xuất");
     }
   };
