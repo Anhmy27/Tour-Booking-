@@ -16,6 +16,7 @@ const ResetPasswordForm = lazy(
   () => import("../components/auth/ResetPasswordForm")
 );
 const UserProfile = lazy(() => import("../pages/UserProfile"));
+const PaymentReturn = lazy(() => import("../pages/PaymentReturn"));
 
 const customerRoutes = {
   path: "/",
@@ -30,6 +31,7 @@ const customerRoutes = {
     { path: "reset-password", element: <ResetPasswordForm /> },
     { path: "profile", element: <UserProfile /> },
     { path: "booking-history", element: <BookingHistoryPage /> },
+    { path: "payment-return", element: <PaymentReturn /> },
     // thêm các route khác ở đây
   ],
 };

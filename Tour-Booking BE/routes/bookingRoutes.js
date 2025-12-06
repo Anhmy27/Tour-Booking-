@@ -6,11 +6,15 @@ const router = express.Router();
 
 router.get("/:tourId/start-dates", bookingController.getTourStartDates);
 
+// MoMo return handler (public - no auth)
+router.post("/momo-return", bookingController.handleMoMoReturn);
+
 router.use(authController.protect);
 
 router.post("/", bookingController.createBooking);
 router.get("/my", bookingController.getMyBookings);
 router.post("/checkout-session", bookingController.getCheckoutSession);
+router.post("/momo-payment", bookingController.createMoMoPayment);
 router.get(
   "/partner",
   authController.protect,
