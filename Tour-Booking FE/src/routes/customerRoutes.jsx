@@ -17,6 +17,7 @@ const ResetPasswordForm = lazy(
 );
 const UserProfile = lazy(() => import("../pages/UserProfile"));
 const RoleRedirect = lazy(() => import("../components/RoleRedirect"));
+const GoogleAuthSuccess = lazy(() => import("../pages/GoogleAuthSuccess"));
 
 const customerRoutes = {
   path: "/",
@@ -29,6 +30,7 @@ const customerRoutes = {
     { path: "confirm-email", element: <ConfirmEmailForm /> },
     { path: "forgot-password", element: <ForgotPasswordForm /> },
     { path: "reset-password", element: <ResetPasswordForm /> },
+    { path: "auth/google/success", element: <GoogleAuthSuccess /> },
     { path: "profile", element: <UserProfile /> },
     { path: "booking-history", element: <BookingHistoryPage /> },
     // thêm các route khác ở đây

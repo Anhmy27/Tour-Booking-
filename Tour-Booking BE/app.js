@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 const xss = require("xss-clean");
 const mongoSanitize = require("express-mongo-sanitize");
 const compression = require("compression");
+const passport = require("./config/passport");
 
 const AppError = require("./utils/appError");
 
@@ -46,6 +47,9 @@ app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser());
 
+// Initialize Passport
+app.use(passport.initialize());
+
 //Data sanitize against NoSQL query injection
 app.use(mongoSanitize());
 
@@ -54,7 +58,7 @@ app.use(xss());
 
 app.use(compression());
 
-app.use(registedRoutes);
+app.use("/api/v1", registedRoutes);
 
 app.all("*", (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server`, 404));

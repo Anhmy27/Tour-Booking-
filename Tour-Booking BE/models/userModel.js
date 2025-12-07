@@ -14,7 +14,6 @@ const userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: [true, "Xin hãy cung cấp email của bạn"],
-      unique: true,
       lowercase: true,
       validate: [validator.isEmail, "Email không hợp lệ"],
     },
@@ -30,7 +29,10 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Xin hãy đặt mật khẩu"],
+      required: function() {
+        // Password không bắt buộc nếu đăng nhập qua Google
+        return !this.googleId;
+      },
       minlength: [8, "Mật khẩu phải chứa ít nhất 8 ký tự"],
       validate: [
         validator.isStrongPassword,
@@ -40,13 +42,21 @@ const userSchema = new mongoose.Schema(
     },
     passwordConfirm: {
       type: String,
-      required: [true, "Xin hãy xác nhận mật khẩu"],
+      required: function() {
+        // Password confirm không bắt buộc nếu đăng nhập qua Google
+        return !this.googleId && this.password;
+      },
       validate: {
         validator: function (el) {
           return el === this.password;
         },
         message: "Mật khẩu không trùng khớp",
       },
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true, // Cho phép null/undefined
     },
     passwordChangedAt: Date,
     passwordResetToken: String,
@@ -62,6 +72,27 @@ const userSchema = new mongoose.Schema(
     },
   },
   { timestamps: true }
+);
+
+// Compound index để đảm bảo:
+// 1. Email + googleId null (tài khoản thường) là unique
+// 2. Email + googleId có giá trị (tài khoản Google) là unique
+// Cho phép cùng 1 email có 2 tài khoản: 1 thường, 1 Google
+userSchema.index(
+  { email: 1, googleId: 1 },
+  { 
+    unique: true,
+    partialFilterExpression: { googleId: { $type: "string" } } 
+  }
+);
+
+// Index cho email của tài khoản thường (không có googleId)
+userSchema.index(
+  { email: 1 },
+  { 
+    unique: true,
+    partialFilterExpression: { googleId: { $eq: null } }
+  }
 );
 
 userSchema.pre("save", async function (next) {

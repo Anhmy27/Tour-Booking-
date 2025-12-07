@@ -80,6 +80,19 @@ const createSendToken = (user, statusCode, req, res) => {
 };
 
 exports.signup = catchAsync(async (req, res, next) => {
+  // Kiểm tra xem email đã được dùng cho tài khoản thường chưa
+  const existingUser = await User.findOne({ 
+    email: req.body.email,
+    $or: [
+      { googleId: { $exists: false } },
+      { googleId: null }
+    ]
+  });
+
+  if (existingUser) {
+    return next(new AppError("Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.", 400));
+  }
+
   const newUser = await User.create({
     name: req.body.name,
     email: req.body.email,
@@ -109,8 +122,16 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!email || !password) {
     return next(new AppError("Hãy nhập tài khoản và mật khẩu!", 400));
   }
+  
   // 2) Check if user exists && password is correct
-  const user = await User.findOne({ email }).select("+password");
+  // Chỉ tìm tài khoản thường (không có googleId)
+  const user = await User.findOne({ 
+    email,
+    $or: [
+      { googleId: { $exists: false } },
+      { googleId: null }
+    ]
+  }).select("+password");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
     return next(new AppError("Tài khoản hoặc mật khẩu không đúng", 401));
@@ -130,6 +151,29 @@ exports.logout = (req, res) => {
   });
   res.status(200).json({ status: "success" });
 };
+
+exports.googleCallback = catchAsync(async (req, res, next) => {
+  // req.user được set bởi passport
+  if (!req.user) {
+    return res.redirect(`${process.env.FRONT_END_URI}/login?error=google_auth_failed`);
+  }
+
+  // Tạo JWT token
+  const token = signToken(req.user._id);
+
+  // Set cookie
+  const cookieOptions = {
+    httpOnly: true,
+    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+    sameSite: "Lax",
+  };
+
+  res.cookie("jwt", token, cookieOptions);
+
+  // Redirect về frontend
+  const frontendUrl = process.env.FRONT_END_URI || "http://localhost:3000";
+  res.redirect(`${frontendUrl}/auth/google/success`);
+});
 
 exports.bypassInactiveProtect = (req, res, next) => {
   req.allowedRoute = true;
