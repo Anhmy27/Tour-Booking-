@@ -14,8 +14,18 @@ L.Icon.Default.mergeOptions({
     "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-const MapLocation = ({ locations, selectedLocation }) => {
-  const locationToFocus = selectedLocation || locations[0];
+// Create custom green icon for start location
+const greenIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+const MapLocation = ({ locations, startLocation, selectedLocation }) => {
+  const locationToFocus = selectedLocation || startLocation || (locations && locations[0]);
 
   const center = locationToFocus
     ? [locationToFocus.coordinates[1], locationToFocus.coordinates[0]]
@@ -38,6 +48,26 @@ const MapLocation = ({ locations, selectedLocation }) => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
 
+          {/* Start Location Marker (Green) */}
+          {startLocation && startLocation.coordinates && (
+            <Marker
+              position={[
+                startLocation.coordinates[1],
+                startLocation.coordinates[0],
+              ]}
+              icon={greenIcon}
+            >
+              <Popup>
+                <strong>🚩 Điểm xuất phát</strong>
+                <br />
+                <strong>{startLocation.address}</strong>
+                <br />
+                {startLocation.description}
+              </Popup>
+            </Marker>
+          )}
+
+          {/* Selected/Focused Location Marker (Red - Default) */}
           {locationToFocus && (
             <Marker
               position={[

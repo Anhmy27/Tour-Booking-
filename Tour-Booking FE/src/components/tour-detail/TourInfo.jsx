@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { FaClock, FaUsers, FaMapMarkerAlt } from "react-icons/fa";
 import dayjs from "dayjs";
 import ResponsiveDatePickers from "../tour-detail/ResponsiveDatePickers";
-import { getBookingSession } from "../../services/api";
+import { getBookingSession, createMoMoPayment } from "../../services/api";
 
 const TourInfo = ({ tour, onSelectLocation }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [numAdults, setNumAdults] = useState(2);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const totalPrice = numAdults * (tour?.price || 0);
@@ -34,6 +33,35 @@ const TourInfo = ({ tour, onSelectLocation }) => {
     }
   };
 
+  const confirmMoMoPayment = async () => {
+    try {
+      setIsLoading(true);
+
+      const res = await createMoMoPayment({
+        tourId: tour.id,
+        numberOfPeople: numAdults,
+        startDate: selectedDate,
+      });
+
+      console.log("=== MOMO API RESPONSE ===");
+      console.log("Full response:", res.data);
+      console.log("Pay URL:", res.data.data?.payUrl);
+
+      if (res.data.status === "success" && res.data.data?.payUrl) {
+        // Chuyển thẳng sang trang thanh toán MoMo
+        window.location.href = res.data.data.payUrl;
+      } else {
+        window.alert("Không thể tạo link thanh toán MoMo!");
+      }
+    } catch (error) {
+      console.error("MoMo error:", error);
+      window.alert(
+        error.response?.data?.message || "Lỗi tạo thanh toán MoMo!"
+      );
+      setIsLoading(false);
+    }
+  };
+
   const handleBookingClick = () => {
     const isValidDate = tour?.startDates?.some((date) =>
       dayjs(date).isSame(selectedDate, "day")
@@ -46,63 +74,54 @@ const TourInfo = ({ tour, onSelectLocation }) => {
       alert("Ngày khởi hành không hợp lệ.");
       return;
     }
-    setIsModalOpen(true);
+    
+    // Gọi MoMo payment luôn không cần modal xác nhận
+    confirmMoMoPayment();
   };
 
   return (
     <section className="container max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-[90%] max-w-md text-center">
-            <h2 className="text-xl font-semibold text-cyan-700 mb-4">
-              Xác nhận đặt tour
-            </h2>
-            <p className="mb-2">
-              <strong>Ngày khởi hành:</strong>{" "}
-              {selectedDate
-                ? dayjs(selectedDate).format("DD/MM/YYYY")
-                : "Chưa chọn"}
-            </p>
-            <p className="mb-2">
-              <strong>Số người lớn:</strong> {numAdults}
-            </p>
-            <p className="mb-4 text-orange-600 font-medium">
-              <strong>Tổng giá:</strong> {totalPrice.toLocaleString()} đ
-            </p>
-            <div className="flex justify-center gap-4 mt-6">
-              <button
-                onClick={confirmBooking}
-                className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg"
-                disabled={isLoading}
-              >
-                {isLoading ? "Đang tải..." : "Xác nhận"}
-              </button>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded-lg"
-              >
-                Huỷ
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Left: Các điểm đến */}
       <div className="md:col-span-2 bg-white rounded-2xl p-6">
         <h1 className="text-2xl font-semibold mb-4 text-cyan-700">
-          Các điểm đến
+          Lộ trình tour
         </h1>
+        
+        {/* Điểm xuất phát */}
+        {tour.startLocation && tour.startLocation.coordinates && (
+          <div className="mb-6 pb-6 border-b-2 border-cyan-200">
+            <h2 className="text-lg font-semibold text-green-600 mb-3 flex items-center gap-2">
+              🚩 Điểm xuất phát
+            </h2>
+            <div
+              className="flex items-start gap-3 py-3 px-4 rounded-lg cursor-pointer bg-green-50 hover:bg-green-100 border-2 border-green-200 transition"
+              onClick={() => handleScrollToMap(tour.startLocation)}
+            >
+              <FaMapMarkerAlt className="text-green-600 mt-1" size={18} />
+              <div>
+                <p className="font-medium text-green-800">{tour.startLocation.address}</p>
+                <p className="text-sm text-gray-600">{tour.startLocation.description}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Các điểm đến */}
+        <h2 className="text-lg font-semibold text-cyan-600 mb-3 flex items-center gap-2">
+          📍 Các điểm đến
+        </h2>
         <ul className="space-y-3">
           {tour.locations.map((loc, idx) => (
             <li
               key={idx}
-              className="flex items-start gap-3 py-3 rounded-lg cursor-pointer hover:text-cyan-600 hover:bg-cyan-50 transition"
+              className="flex items-start gap-3 py-3 px-4 rounded-lg cursor-pointer hover:text-cyan-600 hover:bg-cyan-50 border border-gray-200 transition"
               onClick={() => handleScrollToMap(loc)}
             >
               <FaMapMarkerAlt className="text-cyan-500 mt-1" size={18} />
               <div>
-                <p className="font-medium">{loc.address}</p>
+                <p className="font-medium">
+                  Ngày {loc.day}: {loc.address}
+                </p>
                 <p className="text-sm text-gray-500">{loc.description}</p>
               </div>
             </li>

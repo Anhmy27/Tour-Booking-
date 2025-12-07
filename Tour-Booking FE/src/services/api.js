@@ -139,3 +139,23 @@ export function getBookingSession(tourId, numberOfPeople, startDate) {
     }
   );
 }
+
+export function createMoMoPayment(data) {
+  return axios.post(
+    `${process.env.REACT_APP_BACKEND_URL}bookings/momo-payment`,
+    data,
+    {
+      withCredentials: true,
+    }
+  );
+}
+
+export function updateMoMoPaymentStatus(momoParams) {
+  return axios.post(
+    `${process.env.REACT_APP_BACKEND_URL}bookings/momo-return`,
+    momoParams,
+    {
+      withCredentials: true,
+    }
+  );
+}

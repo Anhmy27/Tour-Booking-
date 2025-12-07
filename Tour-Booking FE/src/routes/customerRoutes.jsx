@@ -16,6 +16,9 @@ const ResetPasswordForm = lazy(
   () => import("../components/auth/ResetPasswordForm")
 );
 const UserProfile = lazy(() => import("../pages/UserProfile"));
+
+const PaymentReturn = lazy(() => import("../pages/PaymentReturn"));
+
 const RoleRedirect = lazy(() => import("../components/RoleRedirect"));
 const GoogleAuthSuccess = lazy(() => import("../pages/GoogleAuthSuccess"));
 
@@ -33,6 +36,7 @@ const customerRoutes = {
     { path: "auth/google/success", element: <GoogleAuthSuccess /> },
     { path: "profile", element: <UserProfile /> },
     { path: "booking-history", element: <BookingHistoryPage /> },
+    { path: "payment-return", element: <PaymentReturn /> },
     // thêm các route khác ở đây
   ],
 };
