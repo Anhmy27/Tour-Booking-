@@ -8,7 +8,7 @@ const Body = () => {
   useEffect(() => {
     const fetchTours = async () => {
       try {
-        const response = await fetch("http://localhost:9999/tours/partner", {
+        const response = await fetch("http://localhost:9999/api/v1/tours/partner", {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",

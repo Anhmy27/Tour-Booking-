@@ -7,6 +7,7 @@ import {
   CalendarDaysIcon,
   ArrowRightOnRectangleIcon,
   ChartBarIcon,
+  DocumentTextIcon,
 } from "@heroicons/react/24/outline";
 import { useAuthContext } from "../../contexts/AuthContext";
 
@@ -55,6 +56,11 @@ const navigation = [
     name: "Đơn đặt Tour",
     href: "/partner/tours/bookinglist",
     icon: CalendarDaysIcon,
+  },
+  {
+    name: "Quản lý Blog",
+    href: "/partner/blogs",
+    icon: DocumentTextIcon,
   },
   {
     name: "Hồ sơ Công Ty",

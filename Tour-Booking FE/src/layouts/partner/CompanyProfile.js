@@ -15,7 +15,7 @@ const CompanyProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch("http://localhost:9999/auth/profile", {
+        const response = await fetch("http://localhost:9999/api/v1/auth/profile", {
           method: "GET",
           credentials: "include",
         });
@@ -64,7 +64,7 @@ const CompanyProfile = () => {
     form.append("photo", companyData.photo);
 
     try {
-      const response = await fetch("http://localhost:9999/auth/profile", {
+      const response = await fetch("http://localhost:9999/api/v1/auth/profile", {
         method: "PATCH",
         body: form,
         credentials: "include",

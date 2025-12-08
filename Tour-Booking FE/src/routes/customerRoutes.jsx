@@ -6,6 +6,8 @@ const LoginForm = lazy(() => import("../components/auth/LoginForm"));
 const SignUpForm = lazy(() => import("../components/auth/SignUp"));
 const TourDetailPage = lazy(() => import("../pages/TourDetailPage"));
 const BookingHistoryPage = lazy(() => import("../pages/BookingHistoryPage"));
+const BlogPage = lazy(() => import("../pages/BlogPage"));
+const BlogDetailPage = lazy(() => import("../pages/BlogDetailPage"));
 const ConfirmEmailForm = lazy(
   () => import("../components/auth/ConfirmEmailForm")
 );
@@ -28,6 +30,8 @@ const customerRoutes = {
   children: [
     { index: true, element: <RoleRedirect><HomePage /></RoleRedirect> },
     { path: "tour-detail/:slug", element: <TourDetailPage /> },
+    { path: "blogs", element: <BlogPage /> },
+    { path: "blogs/:slug", element: <BlogDetailPage /> },
     { path: "login", element: <LoginForm /> },
     { path: "register", element: <SignUpForm /> },
     { path: "confirm-email", element: <ConfirmEmailForm /> },

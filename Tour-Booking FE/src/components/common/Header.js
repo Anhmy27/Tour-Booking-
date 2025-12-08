@@ -51,7 +51,7 @@ const Header = () => {
           <nav className="hidden md:flex gap-6 h-full items-center">
             {[
               { label: "Tìm Tour", href: "/" },
-              { label: "Blog", href: "/" },
+              { label: "Blog", href: "/blogs" },
               { label: "Lịch sử", href: "/booking-history" },
             ].map((item, index) => (
               <a
