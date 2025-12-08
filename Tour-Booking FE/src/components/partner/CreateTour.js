@@ -116,7 +116,7 @@ const CreateTour = () => {
         })),
       };
 
-      const res = await fetch("http://localhost:9999/tours/create", {
+      const res = await fetch("http://localhost:9999/api/v1/tours/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

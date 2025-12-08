@@ -9,7 +9,7 @@ const BookingList = () => {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const response = await fetch("http://localhost:9999/bookings/partner", {
+        const response = await fetch("http://localhost:9999/api/v1/bookings/partner", {
           method: "GET",
           credentials: "include",
         });
