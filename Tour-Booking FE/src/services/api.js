@@ -126,6 +126,13 @@ export function getTourBySlug(slug) {
   return axios.get(`${process.env.REACT_APP_BACKEND_URL}tours/detail/${slug}`);
 }
 
+export function getAvailableSlots(tourId, startDate) {
+  return axios.post(
+    `${process.env.REACT_APP_BACKEND_URL}tours/${tourId}/remaining-slots`,
+    { startDate }
+  );
+}
+
 export function getBookingSession(tourId, numberOfPeople, startDate) {
   return axios.post(
     `${process.env.REACT_APP_BACKEND_URL}bookings/checkout-session`,

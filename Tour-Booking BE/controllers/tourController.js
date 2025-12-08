@@ -341,6 +341,7 @@ exports.getRemainingSlots = catchAsync(async (req, res, next) => {
     {
       $match: {
         tour: new Types.ObjectId(tourId),
+        paid: true, // Chỉ tính booking đã thanh toán
       },
     },
     {
@@ -368,7 +369,9 @@ exports.getRemainingSlots = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: {
+      bookedSlots: takenSlots,
       remainingSlots: tour.maxGroupSize - takenSlots,
+      maxGroupSize: tour.maxGroupSize,
     },
   });
 });
