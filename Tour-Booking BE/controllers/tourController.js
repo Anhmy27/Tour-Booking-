@@ -32,42 +32,76 @@ exports.uploadTourImages = upload.fields([
 ]);
 
 exports.resizeTourImages = catchAsync(async (req, res, next) => {
-  if (!req.files?.imageCover || !req.files?.images) return next();
-  // 1) Cover image
-  const coverFilename = `tour-${req.params.id}-${Date.now()}-cover.jpeg`;
-  const buffer = await sharp(req.files.imageCover[0].buffer)
-    .resize(2000, 1333)
-    .toFormat("jpeg")
-    .jpeg({ quality: 90 })
-    .toBuffer();
+  console.log('=== resizeTourImages START ===');
+  console.log('req.files:', req.files);
+  
+  // Nếu không có file nào thì bỏ qua
+  if (!req.files || (!req.files.imageCover && !req.files.images)) {
+    console.log('No files found, skipping...');
+    return next();
+  }
 
-  const uploadCover = await uploadToCloudinary("tours", buffer, coverFilename);
-  req.body.imageCover = uploadCover.secure_url;
-  // 2) Images
-  req.body.images = [];
+  try {
+    // 1) Upload Cover image (nếu có)
+    if (req.files.imageCover && req.files.imageCover[0]) {
+      console.log('Uploading cover image...');
+      const coverFilename = `tour-cover-${Date.now()}.jpeg`;
+      const uploadCover = await uploadToCloudinary(
+        "tours",
+        req.files.imageCover[0].buffer,
+        coverFilename
+      );
+      req.body.imageCover = uploadCover.secure_url;
+      console.log('Cover uploaded:', uploadCover.secure_url);
+    }
 
-  await Promise.all(
-    req.files.images.map(async (file, i) => {
-      const filename = `tour-${req.params.id}-${Date.now()}-${i + 1}.jpeg`;
+    // 2) Upload Images (nếu có)
+    if (req.files.images && req.files.images.length > 0) {
+      console.log(`Uploading ${req.files.images.length} images...`);
+      req.body.images = [];
+      await Promise.all(
+        req.files.images.map(async (file, i) => {
+          const filename = `tour-image-${Date.now()}-${i + 1}.jpeg`;
+          const uploadedImage = await uploadToCloudinary(
+            "tours",
+            file.buffer,
+            filename
+          );
+          req.body.images.push(uploadedImage.secure_url);
+          console.log(`Image ${i + 1} uploaded:`, uploadedImage.secure_url);
+        })
+      );
+    }
 
-      const buffer = await sharp(file.buffer)
-        .resize(2000, 1333)
-        .toFormat("jpeg")
-        .jpeg({ quality: 90 })
-        .toBuffer(); // Chuyển thành buffer
-
-      const uploadedImage = await uploadToCloudinary("tours", buffer, filename);
-      req.body.images.push(uploadedImage.secure_url); // Lưu URL ảnh
-    })
-  );
-
-  next();
+    console.log('=== resizeTourImages SUCCESS ===');
+    next();
+  } catch (error) {
+    console.error('=== resizeTourImages ERROR ===');
+    console.error('Error:', error);
+    return next(new AppError('Lỗi upload ảnh: ' + error.message, 500));
+  }
 });
 
 //POST
 exports.createTour = catchAsync(async (req, res, next) => {
   if (req.user.role !== "partner") {
     return next(new AppError("Chỉ partner mới được tạo tour", 403));
+  }
+
+  // Parse JSON strings từ FormData
+  if (typeof req.body.startLocation === 'string') {
+    req.body.startLocation = JSON.parse(req.body.startLocation);
+  }
+  if (typeof req.body.locations === 'string') {
+    req.body.locations = JSON.parse(req.body.locations);
+  }
+  
+  // Parse startDates array
+  if (req.body['startDates[]']) {
+    req.body.startDates = Array.isArray(req.body['startDates[]']) 
+      ? req.body['startDates[]'] 
+      : [req.body['startDates[]']];
+    delete req.body['startDates[]'];
   }
 
   const tourData = {

@@ -67,60 +67,59 @@ const CreateTour = () => {
     }
   };
 
-  const uploadImages = async () => {
-    const form = new FormData();
-    imageFiles.forEach((img) => form.append("images", img));
-    const res = await fetch("http://localhost:9999/upload", {
-      method: "POST",
-      body: form,
-    });
-    const data = await res.json();
-    return data.imageUrls || [];
-  };
-
-  const uploadCover = async () => {
-    if (!coverFile) return null;
-    const form = new FormData();
-    form.append("images", coverFile);
-    const res = await fetch("http://localhost:9999/upload", {
-      method: "POST",
-      body: form,
-    });
-    const data = await res.json();
-    return data.imageUrls?.[0] || null;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const imageCoverUrl = await uploadCover();
-      const otherImageUrls = await uploadImages();
-
-      const payload = {
-        ...formData,
-        imageCover: imageCoverUrl,
-        images: otherImageUrls,
-        startDates: dates.map((d) => d.toDate()),
-        startLocation: {
-          type: "Point",
-          coordinates: startLocationCoords,
-          address: formData.startLocation.address,
-          description: formData.startLocation.description,
-        },
-        locations: locations.map((loc) => ({
+      // Tạo FormData để gửi cả file và data
+      const formDataToSend = new FormData();
+      
+      // Append các field thông thường
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("duration", formData.duration);
+      formDataToSend.append("maxGroupSize", formData.maxGroupSize);
+      formDataToSend.append("price", formData.price);
+      formDataToSend.append("priceDiscount", formData.priceDiscount);
+      formDataToSend.append("summary", formData.summary);
+      formDataToSend.append("description", formData.description);
+      
+      // Append ảnh cover (file)
+      if (coverFile) {
+        formDataToSend.append("imageCover", coverFile);
+      }
+      
+      // Append ảnh phụ (files)
+      imageFiles.forEach((file) => {
+        formDataToSend.append("images", file);
+      });
+      
+      // Append startDates (array)
+      dates.forEach((date) => {
+        formDataToSend.append("startDates[]", date.toDate().toISOString());
+      });
+      
+      // Append startLocation (object as JSON string)
+      formDataToSend.append("startLocation", JSON.stringify({
+        type: "Point",
+        coordinates: startLocationCoords,
+        address: formData.startLocation.address,
+        description: formData.startLocation.description,
+      }));
+      
+      // Append locations (array as JSON string)
+      formDataToSend.append("locations", JSON.stringify(
+        locations.map((loc) => ({
           type: "Point",
           coordinates: loc.coordinates,
           address: loc.address,
           description: loc.description,
           day: loc.day,
-        })),
-      };
+        }))
+      ));
 
       const res = await fetch("http://localhost:9999/api/v1/tours/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(payload),
+        body: formDataToSend, // Gửi FormData, không cần set Content-Type
       });
 
       const data = await res.json();
@@ -132,6 +131,7 @@ const CreateTour = () => {
       }
     } catch (error) {
       console.error("Lỗi:", error);
+      alert("Có lỗi xảy ra khi tạo tour!");
     }
   };
 
