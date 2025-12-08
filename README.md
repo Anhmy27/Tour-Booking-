@@ -2,6 +2,8 @@
 
 A comprehensive web-based tour booking platform built with the MERN stack (MongoDB, Express.js, React, Node.js). This system enables users to browse tours, make bookings, write reviews, read travel blogs, and provides administrators with powerful management tools.
 
+> **Tiếng Việt**: Xem [README.vi.md](./README.vi.md) để đọc tài liệu bằng tiếng Việt
+
 ## 📋 Table of Contents
 
 - [Features](#-features)
