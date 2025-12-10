@@ -70,7 +70,7 @@ const CreateTour = () => {
   const uploadImages = async () => {
     const form = new FormData();
     imageFiles.forEach((img) => form.append("images", img));
-    const res = await fetch("http://localhost:9999/upload", {
+    const res = await fetch(`${process.env.REACT_APP_BACKEND_URL.replace('/api/v1/', '')}upload`, {
       method: "POST",
       body: form,
     });
@@ -82,7 +82,7 @@ const CreateTour = () => {
     if (!coverFile) return null;
     const form = new FormData();
     form.append("images", coverFile);
-    const res = await fetch("http://localhost:9999/upload", {
+    const res = await fetch(`${process.env.REACT_APP_BACKEND_URL.replace('/api/v1/', '')}upload`, {
       method: "POST",
       body: form,
     });
@@ -116,7 +116,7 @@ const CreateTour = () => {
         })),
       };
 
-      const res = await fetch("http://localhost:9999/api/v1/tours/create", {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}tours/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

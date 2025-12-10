@@ -210,28 +210,21 @@ exports.incrementView = catchAsync(async (req, res, next) => {
   });
 });
 
-// Toggle like (public)
-exports.toggleLike = catchAsync(async (req, res, next) => {
-  const blog = await Blog.findById(req.params.id);
-  
-  if (!blog) {
-    return next(new AppError("Không tìm thấy blog", 404));
+// Upload ảnh vào nội dung blog
+exports.uploadImage = catchAsync(async (req, res, next) => {
+  if (!req.file) {
+    return next(new AppError("Vui lòng chọn ảnh!", 400));
   }
   
-  const userIndex = blog.likes.indexOf(req.user.id);
-  
-  if (userIndex > -1) {
-    // Unlike
-    blog.likes.splice(userIndex, 1);
-  } else {
-    // Like
-    blog.likes.push(req.user.id);
-  }
-  
-  await blog.save();
+  // Upload ảnh lên Cloudinary
+  const uploadedImage = await uploadToCloudinary(
+    "blogs",
+    req.file.buffer,
+    `blog-content-${Date.now()}.jpeg`
+  );
   
   res.status(200).json({
     status: "success",
-    data: { blog },
+    data: { imageUrl: uploadedImage.secure_url },
   });
 });
