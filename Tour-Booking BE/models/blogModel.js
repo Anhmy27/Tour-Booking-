@@ -46,12 +46,6 @@ const blogSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    likes: [
-      {
-        type: mongoose.Schema.ObjectId,
-        ref: "User",
-      },
-    ],
     publishedAt: Date,
   },
   {
@@ -83,11 +77,6 @@ blogSchema.pre("save", function (next) {
   }
   
   next();
-});
-
-// Virtual populate comments (nếu có)
-blogSchema.virtual("likesCount").get(function () {
-  return this.likes ? this.likes.length : 0;
 });
 
 const Blog = mongoose.model("Blog", blogSchema);

@@ -65,6 +65,31 @@ const CreateTour = () => {
     }
   };
 
+
+  const uploadImages = async () => {
+    const form = new FormData();
+    imageFiles.forEach((img) => form.append("images", img));
+    const res = await fetch(`${process.env.REACT_APP_BACKEND_URL.replace('/api/v1/', '')}upload`, {
+      method: "POST",
+      body: form,
+    });
+    const data = await res.json();
+    return data.imageUrls || [];
+  };
+
+  const uploadCover = async () => {
+    if (!coverFile) return null;
+    const form = new FormData();
+    form.append("images", coverFile);
+    const res = await fetch(`${process.env.REACT_APP_BACKEND_URL.replace('/api/v1/', '')}upload`, {
+      method: "POST",
+      body: form,
+    });
+    const data = await res.json();
+    return data.imageUrls?.[0] || null;
+  };
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -114,7 +139,7 @@ const CreateTour = () => {
         }))
       ));
 
-      const res = await fetch("http://localhost:9999/api/v1/tours/create", {
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}tours/create`, {
         method: "POST",
         credentials: "include",
         body: formDataToSend, // Gửi FormData, không cần set Content-Type

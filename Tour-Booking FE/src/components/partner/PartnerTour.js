@@ -12,7 +12,7 @@ const PartnerTour = () => {
   useEffect(() => {
     const fetchTours = async () => {
       try {
-        const response = await fetch("http://localhost:9999/api/v1/tours/partner", {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}tours/partner`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -45,7 +45,7 @@ const PartnerTour = () => {
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(`http://localhost:9999/api/v1/tours/${tourId}`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}tours/${tourId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
