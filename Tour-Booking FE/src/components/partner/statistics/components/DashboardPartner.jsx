@@ -37,7 +37,7 @@ const DashboardPartner = () => {
   const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:9999/reports/overview", {
+      const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL.replace('/api/v1/', '')}reports/overview`, {
         params: { month: selectedMonth, year: selectedYear },
         withCredentials: true,
       });

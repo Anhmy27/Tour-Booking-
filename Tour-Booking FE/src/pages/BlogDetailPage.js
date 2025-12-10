@@ -23,7 +23,7 @@ const BlogDetailPage = () => {
     } catch (error) {
       console.error("Lỗi khi tải blog:", error);
       alert("Không thể tải blog. Vui lòng thử lại!");
-      navigate("/blogs");
+      navigate("/blogs");/*.*/
     } finally {
       setLoading(false);
     }
@@ -155,22 +155,6 @@ const BlogDetailPage = () => {
               />
             </svg>
             {blog.views} lượt xem
-          </span>
-          <span className="flex items-center gap-2">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-              />
-            </svg>
-            {blog.likesCount || 0} lượt thích
           </span>
         </div>
 

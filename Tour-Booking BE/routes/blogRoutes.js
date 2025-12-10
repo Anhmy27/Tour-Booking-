@@ -14,7 +14,7 @@ const multerFilter = (req, file, cb) => {
   if (file.mimetype.startsWith("image")) {
     cb(null, true);
   } else {
-    cb(new Error("Chỉ cho phép upload ảnh!"), false);
+    cb(new Error("Chỉ cho phép upload ảnh!"), false);/*.*/
   }
 };
 
@@ -41,11 +41,13 @@ const resizeBlogImage = catchAsync(async (req, res, next) => {
 router.get("/public", blogController.getPublicBlogs);
 router.get("/public/:slug", blogController.getPublicBlog);
 router.patch("/public/:id/view", blogController.incrementView);
-router.patch("/public/:id/like", blogController.toggleLike);
 
 // Protected routes - chỉ partner và admin
 router.use(authController.protect);
 router.use(authController.restrictTo("partner", "admin"));
+
+// Upload ảnh vào nội dung blog
+router.post("/upload-image", upload.single("image"), resizeBlogImage, blogController.uploadImage);
 
 // CRUD routes
 router
