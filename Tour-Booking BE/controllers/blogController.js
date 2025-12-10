@@ -14,7 +14,7 @@ exports.getPublicBlogs = catchAsync(async (req, res, next) => {
     filter.$text = { $search: search };
   }
   
-  let query = Blog.find(filter).populate("author", "name email");
+  let query = Blog.find(filter).populate("author", "name email");/*.*/
   
   // Sort
   if (sort === "newest") query = query.sort("-createdAt");

@@ -39,7 +39,7 @@ const customerRoutes = {
     { path: "reset-password", element: <ResetPasswordForm /> },
     { path: "auth/google/success", element: <GoogleAuthSuccess /> },
     { path: "profile", element: <UserProfile /> },
-    { path: "booking-history", element: <BookingHistoryPage /> },
+    { path: "booking-history", element: <BookingHistoryPage /> },/*.*/
     { path: "payment-return", element: <PaymentReturn /> },
     // thêm các route khác ở đây
   ],

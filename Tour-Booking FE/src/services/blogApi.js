@@ -20,7 +20,7 @@ export const blogService = {
   createBlog: (formData) =>
     axios.post(`${API_URL}blogs`, formData, {
       headers: {
-        "Content-Type": "multipart/form-data",
+        "Content-Type": "multipart/form-data",/*.*/
       },
       withCredentials: true,
     }),

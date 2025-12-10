@@ -23,7 +23,7 @@ const BlogDetailPage = () => {
     } catch (error) {
       console.error("Lỗi khi tải blog:", error);
       alert("Không thể tải blog. Vui lòng thử lại!");
-      navigate("/blogs");
+      navigate("/blogs");/*.*/
     } finally {
       setLoading(false);
     }
