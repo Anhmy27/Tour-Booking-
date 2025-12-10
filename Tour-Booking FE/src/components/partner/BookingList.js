@@ -16,7 +16,13 @@ const BookingList = () => {
 
         const data = await response.json();
         if (response.ok) {
-          setBookings(data.data.bookings);
+          // Backend trả user, không phải customer -> map lại và chuẩn hóa status hiển thị
+          const normalized = (data.data.bookings || []).map((b) => ({
+            ...b,
+            customer: b.customer || b.user || {}, // đảm bảo có trường customer cho UI
+            statusDisplay: b.paid ? "confirmed" : "pending",
+          }));
+          setBookings(normalized);
         } else {
           alert("Lỗi lấy danh sách booking: " + data.message);
         }
@@ -29,7 +35,8 @@ const BookingList = () => {
   }, []);
 
   const filteredBookings = bookings.filter(
-    (booking) => filterStatus === "all" || booking.status === filterStatus
+    (booking) =>
+      filterStatus === "all" || booking.statusDisplay === filterStatus
   );
 
   return (
@@ -48,7 +55,6 @@ const BookingList = () => {
           <div className="flex justify-center flex-wrap gap-2 mb-6">
             {[
               { label: "Tất cả", value: "all" },
-              { label: "Chờ duyệt", value: "pending" },
               { label: "Đã xác nhận", value: "confirmed" },
               { label: "Đã hủy", value: "cancelled" },
             ].map(({ label, value }) => (
@@ -56,13 +62,11 @@ const BookingList = () => {
                 key={value}
                 className={`px-4 py-2 rounded-lg font-medium transition shadow-sm ${
                   filterStatus === value
-                    ? value === "pending"
-                      ? "bg-yellow-500 text-white"
-                      : value === "confirmed"
-                        ? "bg-green-600 text-white"
-                        : value === "cancelled"
-                          ? "bg-red-600 text-white"
-                          : "bg-gray-800 text-white"
+                    ? value === "confirmed"
+                      ? "bg-green-600 text-white"
+                      : value === "cancelled"
+                        ? "bg-red-600 text-white"
+                        : "bg-gray-800 text-white"
                     : "bg-gray-200 text-gray-800"
                 }`}
                 onClick={() => setFilterStatus(value)}
@@ -106,18 +110,14 @@ const BookingList = () => {
                     <td>
                       <span
                         className={`px-2 py-1 rounded-md text-white text-xs font-medium ${
-                          booking.status === "confirmed"
+                          booking.statusDisplay === "confirmed"
                             ? "bg-green-600"
-                            : booking.status === "pending"
-                              ? "bg-yellow-500"
-                              : "bg-red-600"
+                            : "bg-red-600"
                         }`}
                       >
-                        {booking.status === "confirmed"
+                        {booking.statusDisplay === "confirmed"
                           ? "Đã xác nhận"
-                          : booking.status === "pending"
-                            ? "Chờ duyệt"
-                            : "Đã hủy"}
+                          : "Đã hủy"}
                       </span>
                     </td>
                   </tr>
@@ -139,3 +139,5 @@ const BookingList = () => {
 };
 
 export default BookingList;
+
+

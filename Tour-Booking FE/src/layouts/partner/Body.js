@@ -60,14 +60,6 @@ const Body = () => {
           </h3>
         </div>
 
-        <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-6 shadow h-full text-center">
-          <h5 className="text-sm font-medium text-yellow-700 uppercase">
-            Tour đang chờ duyệt
-          </h5>
-          <h3 className="text-3xl font-bold text-yellow-700 mt-2">
-            {pendingTours} tour
-          </h3>
-        </div>
       </div>
 
       {/* Tour nổi bật */}
