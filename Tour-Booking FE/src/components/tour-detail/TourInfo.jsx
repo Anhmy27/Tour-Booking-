@@ -22,11 +22,6 @@ const TourInfo = ({ tour, onSelectLocation }) => {
       try {
         const response = await getAvailableSlots(tour.id, selectedDate);
         setAvailability(response.data.data);
-        
-        // Reset số người về giá trị an toàn nếu vượt quá số chỗ trống
-        if (response.data.data.remainingSlots < numAdults) {
-          setNumAdults(Math.min(2, response.data.data.remainingSlots));
-        }
       } catch (error) {
         console.error("Error fetching availability:", error);
         setAvailability(null);
