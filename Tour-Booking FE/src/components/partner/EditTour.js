@@ -21,7 +21,7 @@ const EditTour = () => {
   useEffect(() => {
     const fetchTourDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:9999/api/v1/tours/${id}`, {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}tours/${id}`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -48,7 +48,7 @@ const EditTour = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:9999/api/v1/tours/${id}`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}tours/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

@@ -45,10 +45,4 @@ export const blogService = {
     axios.patch(`${API_URL}blogs/public/${id}/view`, {}, {
       withCredentials: true,
     }),
-
-  // Toggle like
-  toggleLike: (id) =>
-    axios.patch(`${API_URL}blogs/public/${id}/like`, {}, {
-      withCredentials: true,
-    }),
 };
