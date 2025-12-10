@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import Sidebar from "../../layouts/partner/Sidebar";
 import Header from "../../layouts/partner/Header";
 import DatePicker from "react-multi-date-picker";
-import LocationPicker from "./LocationPicker";
 
 import "react-multi-date-picker/styles/layouts/prime.css"; // theme đẹp hơn
 
@@ -35,8 +34,7 @@ const CreateTour = () => {
     coordinates: [105.8542, 21.0285], // [lng, lat]
   });
   const [editingIndex, setEditingIndex] = useState(null);
-  const [showStartLocationMap, setShowStartLocationMap] = useState(false);
-  const [startLocationCoords, setStartLocationCoords] = useState([105.8542, 21.0285]);
+  const [startLocationCoords] = useState([105.8542, 21.0285]);
 
   const [finalPrice, setFinalPrice] = useState(0);
   const [coverFile, setCoverFile] = useState(null);
@@ -253,18 +251,6 @@ const CreateTour = () => {
                     className={inputClass}
                     required
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowStartLocationMap(true)}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                  >
-                    📍 Chọn vị trí trên bản đồ
-                  </button>
-                  {startLocationCoords && (
-                    <p className="text-xs text-gray-500">
-                      Tọa độ: Lat {startLocationCoords[1].toFixed(4)}, Lng {startLocationCoords[0].toFixed(4)}
-                    </p>
-                  )}
                 </div>
               </div>
 
@@ -317,43 +303,6 @@ const CreateTour = () => {
                   />
                 </div>
               </div>
-
-              {/* Start Location Map Modal */}
-              {showStartLocationMap && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                  <div className="bg-white rounded-xl p-6 w-full max-w-2xl">
-                    <h4 className="text-xl font-bold text-indigo-600 mb-4">
-                      Chọn vị trí điểm xuất phát
-                    </h4>
-                    <LocationPicker
-                      onLocationSelect={(coords) => setStartLocationCoords(coords)}
-                      initialPosition={[startLocationCoords[1], startLocationCoords[0]]}
-                    />
-                    <p className="text-xs text-gray-500 mt-2">
-                      Tọa độ hiện tại: Lat {startLocationCoords[1].toFixed(4)}, Lng {startLocationCoords[0].toFixed(4)}
-                    </p>
-                    <div className="flex gap-3 mt-4">
-                      <button
-                        type="button"
-                        onClick={() => setShowStartLocationMap(false)}
-                        className="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700"
-                      >
-                        Xác nhận
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowStartLocationMap(false);
-                          setStartLocationCoords([105.8542, 21.0285]);
-                        }}
-                        className="flex-1 bg-gray-500 text-white py-2 rounded-lg hover:bg-gray-600"
-                      >
-                        Hủy
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Locations Section */}
               <div className="md:col-span-2 border-t pt-6">
@@ -467,24 +416,6 @@ const CreateTour = () => {
                           />
                         </div>
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Chọn vị trí trên bản đồ (Click vào bản đồ)
-                          </label>
-                          <LocationPicker
-                            onLocationSelect={(coords) =>
-                              handleLocationChange("coordinates", coords)
-                            }
-                            initialPosition={[
-                              currentLocation.coordinates[1],
-                              currentLocation.coordinates[0],
-                            ]}
-                          />
-                          <p className="text-xs text-gray-500 mt-1">
-                            Tọa độ hiện tại: Lat {currentLocation.coordinates[1].toFixed(4)}, Lng{" "}
-                            {currentLocation.coordinates[0].toFixed(4)}
-                          </p>
-                        </div>
                       </div>
 
                       <div className="flex gap-3 mt-6">

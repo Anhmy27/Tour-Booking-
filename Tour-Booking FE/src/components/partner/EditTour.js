@@ -48,10 +48,12 @@ const EditTour = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Partner không được đổi trạng thái, bỏ status khi gửi
+      const { status, ...payload } = formData;
       const response = await fetch(`http://localhost:9999/api/v1/tours/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
         credentials: "include",
       });
 
@@ -130,19 +132,16 @@ const EditTour = () => {
           />
         </div>
 
-        {/* Trạng thái Tour */}
+        {/* Trạng thái Tour (chỉ hiển thị) */}
         <div>
           <label className="text-gray-700 font-semibold">Trạng thái Tour</label>
-          <select
-            name="status"
-            value={formData.status}
-            onChange={handleChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400"
-          >
-            <option value="pending">Chờ duyệt</option>
-            <option value="active">Hoạt động</option>
-            <option value="inactive">Không hoạt động</option>
-          </select>
+          <div className="w-full p-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-700">
+            {formData.status === "active"
+              ? "Hoạt động"
+              : formData.status === "inactive"
+                ? "Không hoạt động"
+                : "Chờ duyệt"}
+          </div>
         </div>
 
         {/* Giá */}
