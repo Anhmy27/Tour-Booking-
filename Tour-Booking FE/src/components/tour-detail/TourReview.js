@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
 
-const TourReviews = ({ tourId }) => {
+const 
+TourReviews = ({ tourId }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!tourId) return;
+    if (!tourId) {
+      setLoading(false);
+      return;
+    }
 
     const fetchReviews = async () => {
       try {

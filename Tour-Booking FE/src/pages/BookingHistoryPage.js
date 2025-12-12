@@ -126,7 +126,7 @@ const BookingHistoryPage = () => {
                 )}
 
                 {/* --- Review Section --- */}
-                {isTourFinished && (
+                {isTourFinished && booking.tour && (
                   <div className="mt-4">
                     {activeReviewTourId === booking.tour._id ? (
                       <div className="bg-gray-50 p-4 rounded-lg border mt-2">
@@ -158,7 +158,7 @@ const BookingHistoryPage = () => {
                         <div className="flex gap-2">
                           <button
                             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            onClick={() => handleReviewSubmit(booking.tour._id)}
+                            onClick={() => handleReviewSubmit(booking.tour?._id)}
                           >
                             Gửi đánh giá
                           </button>
@@ -173,7 +173,7 @@ const BookingHistoryPage = () => {
                     ) : (
                       <button
                         className="mt-3 px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700"
-                        onClick={() => setActiveReviewTourId(booking.tour._id)}
+                        onClick={() => setActiveReviewTourId(booking.tour?._id)}
                       >
                         Viết đánh giá
                       </button>
