@@ -52,18 +52,14 @@ const signToken = (id) => {
 const createSendToken = (user, statusCode, req, res) => {
   const token = signToken(user._id);
 
-  // Nếu muốn session cookie (xóa khi đóng browser), bỏ expires
-  // Nếu muốn persistent cookie (lưu lâu dài), dùng expires
   const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
     httpOnly: true,
     secure: req.secure || req.headers["x-forwarded-proto"] === "https",
     sameSite: "Lax",
   };
-
-  // Uncomment dòng dưới nếu muốn cookie lưu lâu dài (không xóa khi đóng browser)
-  // cookieOptions.expires = new Date(
-  //   Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-  // );
 
   res.cookie("jwt", token, cookieOptions);
 
@@ -81,18 +77,16 @@ const createSendToken = (user, statusCode, req, res) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
   // Kiểm tra xem email đã được dùng cho tài khoản thường chưa
-  const existingUser = await User.findOne({
+  const existingUser = await User.findOne({ 
     email: req.body.email,
-    $or: [{ googleId: { $exists: false } }, { googleId: null }],
+    $or: [
+      { googleId: { $exists: false } },
+      { googleId: null }
+    ]
   });
 
   if (existingUser) {
-    return next(
-      new AppError(
-        "Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.",
-        400
-      )
-    );
+    return next(new AppError("Email này đã được đăng ký. Vui lòng đăng nhập hoặc sử dụng email khác.", 400));
   }
 
   const newUser = await User.create({
@@ -124,12 +118,15 @@ exports.login = catchAsync(async (req, res, next) => {
   if (!email || !password) {
     return next(new AppError("Hãy nhập tài khoản và mật khẩu!", 400));
   }
-
+  
   // 2) Check if user exists && password is correct
   // Chỉ tìm tài khoản thường (không có googleId)
-  const user = await User.findOne({
+  const user = await User.findOne({ 
     email,
-    $or: [{ googleId: { $exists: false } }, { googleId: null }],
+    $or: [
+      { googleId: { $exists: false } },
+      { googleId: null }
+    ]
   }).select("+password");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
@@ -151,12 +148,10 @@ exports.logout = (req, res) => {
   res.status(200).json({ status: "success" });
 };
 
-exports.googleCallback = catchAsync(async (req, res) => {
+exports.googleCallback = catchAsync(async (req, res, next) => {
   // req.user được set bởi passport
   if (!req.user) {
-    return res.redirect(
-      `${process.env.FRONT_END_URI}/login?error=google_auth_failed`
-    );
+    return res.redirect(`${process.env.FRONT_END_URI}/login?error=google_auth_failed`);
   }
 
   // Tạo JWT token
@@ -258,7 +253,9 @@ exports.getProfile = catchAsync(async (req, res) => {
 
   res.status(200).json({
     status: "success",
-    data: user,
+    data: {
+      data: user,
+    },
   });
 });
 
@@ -278,7 +275,7 @@ exports.confirmEmail = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     data: {
-      user,
+      data: user,
     },
   });
 });
