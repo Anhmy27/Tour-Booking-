@@ -17,10 +17,7 @@ const ForgotPasswordForm = () => {
 
   useEffect(() => {
     if (user) {
-      if (!user.active) {
-        navigate("/confirm-email");
-        return;
-      }
+      // Đã bỏ kiểm tra user.active
       switch (user.role?.trim().toLowerCase()) {
         case "admin":
           navigate("/admin");
