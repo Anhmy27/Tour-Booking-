@@ -8,11 +8,7 @@ const Header = () => {
   const navigate = useNavigate();
   const menuRef = useRef(null);
 
-  useEffect(() => {
-    if (user && !user.active) {
-      navigate("/confirm-email");
-    }
-  }, [navigate, user]);
+  // Đã bỏ useEffect kiểm tra user.active
 
   useEffect(() => {
     const handleClickOutside = (event) => {

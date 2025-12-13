@@ -34,7 +34,7 @@ const customerRoutes = {
     { path: "blogs/:slug", element: <BlogDetailPage /> },
     { path: "login", element: <LoginForm /> },
     { path: "register", element: <SignUpForm /> },
-    { path: "confirm-email", element: <ConfirmEmailForm /> },
+    // Đã bỏ route confirm-email
     { path: "forgot-password", element: <ForgotPasswordForm /> },
     { path: "reset-password", element: <ResetPasswordForm /> },
     { path: "auth/google/success", element: <GoogleAuthSuccess /> },
