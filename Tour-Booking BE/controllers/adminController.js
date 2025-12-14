@@ -7,59 +7,15 @@ const { buildPaginatedQuery } = require("../utils/queryHelper");
 const Email = require("../utils/email");
 
 const getAllUserForAdmin = catchAsync(async (req, res) => {
-  const { role, status, page = 1, limit = 10 } = req.query;
-  const filters = { role: { $ne: "admin" }, active: true };
-
-  if (role && role !== "admin") {
-    filters.role = role;
-  }
-
-  if (status !== undefined) filters.active = status === "true";
-
-  const { finalQuery, paginationOptions } = buildPaginatedQuery({
-    query: req.query,
-    filters,
-    searchFields: ["name", "email"],
-    page,
-    limit,
-    select: "name email role active photo description",
-    sort: "createdAt",
-  });
-  const [totalUsers, users] = await Promise.all([
-    User.countDocuments(finalQuery),
-    User.find(finalQuery)
-      .skip(paginationOptions.skip)
-      .limit(paginationOptions.limit)
-      .select(paginationOptions.select)
-      .sort(paginationOptions.sort)
-      .lean(),
-  ]);
-
-  // let searchCondition = {};
-
-  // if(search ){
-  //     searchCondition ={
-  //         $or:[
-  //             {name: {$regex:search, $options: "i"} },
-  //             {email: {$regex:search, $options: "i"} }
-  //         ],
-  //     };
-  // }
-
-  // const finalQuery = {...filter,...searchCondition};
-  // const totalUsers = await User.countDocuments(finalQuery);
-  // console.log(totalUsers);
-
-  // const users = await User.find(finalQuery)
-  //     .skip((page - 1) * parseInt(limit))
-  //     .limit(parseInt(limit))
-  //     .select("name email role active photo description")
-  //     .lean();
+  // Lấy tất cả users (không phải admin)
+  const users = await User.find({ role: { $ne: "admin" } })
+    .select("name email role active photo description")
+    .sort("-createdAt")
+    .lean();
 
   res.status(200).json({
     status: "success",
     results: users.length,
-    total: totalUsers,
     data: { users },
   });
 });
@@ -191,7 +147,7 @@ const approveTour = catchAsync(async (req, res, next) => {
   });
 });
 
-const banUser = catchAsync(async (req, res, next) => {
+const toggleUserStatus = catchAsync(async (req, res, next) => {
   const { userId } = req.params;
 
   const user = await User.findById(userId);
@@ -199,30 +155,32 @@ const banUser = catchAsync(async (req, res, next) => {
     return next(new AppError("Không tìm thấy người dùng", 404));
   }
 
-  if (!user.active) {
-    return next(new AppError("Người dùng đã bị cấm", 400));
-  }
   if (user.role === "admin") {
-    return next(new AppError("Không thể cấm admin", 403));
+    return next(new AppError("Không thể thay đổi trạng thái admin", 403));
   }
-  const bannedUser = await User.findByIdAndUpdate(
-    userId,
-    { active: false },
-    { new: true, runValidators: true }
-  ).select("name email role active");
+
+  // Toggle active status
+  user.active = !user.active;
+  await user.save({ validateBeforeSave: false });
 
   res.status(200).json({
     status: "success",
-    message: "Đã cấm người dùng thành công",
+    message: `Đã ${user.active ? "kích hoạt" : "vô hiệu hóa"} người dùng`,
     data: {
-      user: bannedUser,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        active: user.active,
+      },
     },
   });
 });
+
 module.exports = {
   getAllUserForAdmin,
   createPartnerAccount,
   approveTour,
   getPendingTours,
-  banUser,
+  toggleUserStatus,
 };
