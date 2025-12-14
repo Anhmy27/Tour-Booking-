@@ -15,13 +15,10 @@ export const AuthProvider = ({ children }) => {
         const user = res.data.data.data;
         if (user) {
           setUser(user);
-          // Set flag để biết user đang đăng nhập
-          sessionStorage.setItem("isAuthenticated", "true");
         }
       } catch (error) {
         // Nếu lỗi (chưa đăng nhập), set user = null
         setUser(null);
-        sessionStorage.removeItem("isAuthenticated");
       } finally {
         setLoading(false);
       }
@@ -34,7 +31,6 @@ export const AuthProvider = ({ children }) => {
       const res = await authService.login(email, password);
       if (res.data.status === "success") {
         setUser(res.data.data.user);
-        sessionStorage.setItem("isAuthenticated", "true");
         return res.data.data.user;
       }
     } catch (err) {
@@ -94,7 +90,9 @@ export const AuthProvider = ({ children }) => {
   const forgotPassword = async (email) => {
     try {
       const res = await authService.forgotPassword(email);
-      if (res.data.status === "success") return true;
+      if (res.data.status === "success") {
+        return { success: true, token: res.data.token, email };
+      }
     } catch (err) {
       throw new Error(
         err.response?.data?.message ||
@@ -144,7 +142,6 @@ export const AuthProvider = ({ children }) => {
         updatePassword,
         forgotPassword,
         resetPassword,
-        isAuthenticated: !!user,
         updateProfile,
       }}
     >

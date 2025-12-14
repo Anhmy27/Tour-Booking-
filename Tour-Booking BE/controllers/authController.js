@@ -97,7 +97,6 @@ exports.signup = catchAsync(async (req, res, next) => {
     active: true, // Tự động active khi đăng ký
   });
 
-  await newUser.save({ validateBeforeSave: false });
   createSendToken(newUser, 201, req, res);
 });
 
@@ -260,26 +259,14 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   // 2) Generate the random reset token
   const resetToken = user.createPasswordResetToken();
-
   await user.save({ validateBeforeSave: false });
 
-  // 3) Send it to user's email
-  try {
-    const resetURL = `${process.env.FRONT_END_URI}/reset-password?token=${resetToken}&email=${user.email}`;
-    await new Email(user, { url: resetURL }).sendPasswordReset();
-
-    res.status(200).json({
-      status: "success",
-      message: "Mail xác nhận đã được gửi tới email của bạn!",
-    });
-    /*eslint-disable-next-line*/
-  } catch (err) {
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-
-    return next(new AppError("Có lỗi xảy ra khi gửi mail!"), 500);
-  }
+  // 3) Return token without sending email
+  res.status(200).json({
+    status: "success",
+    message: "Xác nhận thành công! Vui lòng đặt lại mật khẩu.",
+    token: resetToken,
+  });
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
