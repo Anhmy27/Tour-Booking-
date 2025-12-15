@@ -37,7 +37,7 @@ const createPartnerAccount = catchAsync(async (req, res, next) => {
     role: "partner",
     password: temporaryPassword,
     passwordConfirm: temporaryPassword,
-    description: description || "Đối tác kinh doanh tour du lịch",
+    description: description ,
     active: true,
   });
   console.log(
