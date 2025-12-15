@@ -32,19 +32,19 @@ exports.uploadTourImages = upload.fields([
 ]);
 
 exports.resizeTourImages = catchAsync(async (req, res, next) => {
-  console.log('=== resizeTourImages START ===');
-  console.log('req.files:', req.files);
-  
+  console.log("=== resizeTourImages START ===");
+  console.log("req.files:", req.files);
+
   // Nếu không có file nào thì bỏ qua
   if (!req.files || (!req.files.imageCover && !req.files.images)) {
-    console.log('No files found, skipping...');
+    console.log("No files found, skipping...");
     return next();
   }
 
   try {
     // 1) Upload Cover image (nếu có)
     if (req.files.imageCover && req.files.imageCover[0]) {
-      console.log('Uploading cover image...');
+      console.log("Uploading cover image...");
       const coverFilename = `tour-cover-${Date.now()}.jpeg`;
       const uploadCover = await uploadToCloudinary(
         "tours",
@@ -52,7 +52,7 @@ exports.resizeTourImages = catchAsync(async (req, res, next) => {
         coverFilename
       );
       req.body.imageCover = uploadCover.secure_url;
-      console.log('Cover uploaded:', uploadCover.secure_url);
+      console.log("Cover uploaded:", uploadCover.secure_url);
     }
 
     // 2) Upload Images (nếu có)
@@ -73,12 +73,12 @@ exports.resizeTourImages = catchAsync(async (req, res, next) => {
       );
     }
 
-    console.log('=== resizeTourImages SUCCESS ===');
+    console.log("=== resizeTourImages SUCCESS ===");
     next();
   } catch (error) {
-    console.error('=== resizeTourImages ERROR ===');
-    console.error('Error:', error);
-    return next(new AppError('Lỗi upload ảnh: ' + error.message, 500));
+    console.error("=== resizeTourImages ERROR ===");
+    console.error("Error:", error);
+    return next(new AppError("Lỗi upload ảnh: " + error.message, 500));
   }
 });
 
@@ -89,19 +89,19 @@ exports.createTour = catchAsync(async (req, res, next) => {
   }
 
   // Parse JSON strings từ FormData
-  if (typeof req.body.startLocation === 'string') {
+  if (typeof req.body.startLocation === "string") {
     req.body.startLocation = JSON.parse(req.body.startLocation);
   }
-  if (typeof req.body.locations === 'string') {
+  if (typeof req.body.locations === "string") {
     req.body.locations = JSON.parse(req.body.locations);
   }
-  
+
   // Parse startDates array
-  if (req.body['startDates[]']) {
-    req.body.startDates = Array.isArray(req.body['startDates[]']) 
-      ? req.body['startDates[]'] 
-      : [req.body['startDates[]']];
-    delete req.body['startDates[]'];
+  if (req.body["startDates[]"]) {
+    req.body.startDates = Array.isArray(req.body["startDates[]"])
+      ? req.body["startDates[]"]
+      : [req.body["startDates[]"]];
+    delete req.body["startDates[]"];
   }
 
   const tourData = {
@@ -220,6 +220,9 @@ exports.getAllTours = catchAsync(async (req, res) => {
     search = "",
     minPrice,
     maxPrice,
+    duration,
+    maxGroupSize,
+    startDate,
   } = req.query;
 
   const skip = (page - 1) * limit;
@@ -269,6 +272,25 @@ exports.getAllTours = catchAsync(async (req, res) => {
     filterQuery.ratingsAverage = ratingsConditions;
   }
 
+  // Lọc theo thời gian tour (duration)
+  if (duration) {
+    filterQuery.duration = Number(duration);
+  }
+
+  // Lọc theo số người tối đa (maxGroupSize)
+  if (maxGroupSize) {
+    filterQuery.maxGroupSize = { $gte: Number(maxGroupSize) };
+  }
+
+  // Lọc theo ngày khởi hành (startDate)
+  if (startDate) {
+    filterQuery.startDates = {
+      $elemMatch: {
+        $gte: new Date(startDate),
+      },
+    };
+  }
+
   // Truy vấn database
   const tours = await Tour.find(filterQuery)
     .sort(sort)
@@ -311,12 +333,14 @@ exports.getTourBySlug = catchAsync(async (req, res, next) => {
     imageCover: tour.imageCover,
     images: tour.images,
     startDates: tour.startDates,
-    startLocation: tour.startLocation ? {
-      type: tour.startLocation.type,
-      coordinates: tour.startLocation.coordinates,
-      address: tour.startLocation.address,
-      description: tour.startLocation.description,
-    } : null,
+    startLocation: tour.startLocation
+      ? {
+          type: tour.startLocation.type,
+          coordinates: tour.startLocation.coordinates,
+          address: tour.startLocation.address,
+          description: tour.startLocation.description,
+        }
+      : null,
     locations: tour.locations.map((loc) => ({
       type: loc.type,
       coordinates: loc.coordinates,
