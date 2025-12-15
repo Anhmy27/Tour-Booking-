@@ -1,13 +1,51 @@
-import React, { useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useContext, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { TourContext } from "../../contexts/TourContext";
 
 const TourList = () => {
-  const { tours } = useContext(TourContext);
+  const { tours, pagination, searchTours } = useContext(TourContext);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const page = searchParams.get("page");
+    if (page && parseInt(page) !== pagination.currentPage) {
+      searchTours({ page: parseInt(page) });
+    }
+  }, []);
 
   const handleNavigateToDetail = (slug) => {
     if (slug) navigate(`/tour-detail/${slug}`);
+  };
+
+  const handlePageChange = (page) => {
+    setSearchParams({ page });
+    searchTours({ page });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxPagesToShow = 5;
+    const { currentPage, totalPages } = pagination;
+
+    if (totalPages <= maxPagesToShow) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      pages.push(1);
+      let startPage = Math.max(2, currentPage - 1);
+      let endPage = Math.min(totalPages - 1, currentPage + 1);
+
+      if (startPage > 2) pages.push("...");
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+      if (endPage < totalPages - 1) pages.push("...");
+      if (totalPages > 1) pages.push(totalPages);
+    }
+    return pages;
   };
 
   return (
@@ -119,6 +157,61 @@ const TourList = () => {
             </div>
           ))}
         </div>
+
+        {/* Phân trang */}
+        {pagination.totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 py-8">
+            <button
+              onClick={() => handlePageChange(pagination.currentPage - 1)}
+              disabled={pagination.currentPage === 1}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                pagination.currentPage === 1
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-cyan-400 hover:text-white border border-gray-300"
+              }`}
+            >
+              Trước
+            </button>
+
+            {getPageNumbers().map((page, index) => {
+              if (page === "...") {
+                return (
+                  <span
+                    key={`ellipsis-${index}`}
+                    className="px-2 text-gray-500"
+                  >
+                    ...
+                  </span>
+                );
+              }
+              return (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-10 h-10 rounded-lg font-medium transition-colors ${
+                    pagination.currentPage === page
+                      ? "bg-cyan-400 text-white"
+                      : "bg-white text-gray-700 hover:bg-cyan-100 border border-gray-300"
+                  }`}
+                >
+                  {page}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => handlePageChange(pagination.currentPage + 1)}
+              disabled={pagination.currentPage === pagination.totalPages}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                pagination.currentPage === pagination.totalPages
+                  ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                  : "bg-white text-gray-700 hover:bg-cyan-400 hover:text-white border border-gray-300"
+              }`}
+            >
+              Sau
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );
