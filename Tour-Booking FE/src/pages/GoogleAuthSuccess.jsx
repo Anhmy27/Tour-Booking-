@@ -6,7 +6,6 @@ import Loading from "../components/Loading";
 
 const GoogleAuthSuccess = () => {
   const navigate = useNavigate();
-  const { setUser } = useAuthContext();
 
   useEffect(() => {
     const fetchUserAndRedirect = async () => {
@@ -36,7 +35,7 @@ const GoogleAuthSuccess = () => {
     };
 
     fetchUserAndRedirect();
-  }, [navigate, setUser]);
+  }, [navigate]);
 
   return <Loading />;
 };

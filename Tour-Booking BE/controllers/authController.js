@@ -147,8 +147,6 @@ exports.googleCallback = catchAsync(async (req, res, next) => {
   // Set cookie
   const cookieOptions = {
     httpOnly: true,
-    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
-    sameSite: "Lax",
   };
 
   res.cookie("jwt", token, cookieOptions);
