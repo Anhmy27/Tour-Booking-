@@ -2,6 +2,7 @@ import { lazy } from "react";
 
 const CustomerLayout = lazy(() => import("../layouts/customer/CustomerLayout"));
 const HomePage = lazy(() => import("../pages/HomePage"));
+const ToursPage = lazy(() => import("../pages/ToursPage"));
 const LoginForm = lazy(() => import("../components/auth/LoginForm"));
 const SignUpForm = lazy(() => import("../components/auth/SignUp"));
 const TourDetailPage = lazy(() => import("../pages/TourDetailPage"));
@@ -28,7 +29,15 @@ const customerRoutes = {
   path: "/",
   element: <CustomerLayout />,
   children: [
-    { index: true, element: <RoleRedirect><HomePage /></RoleRedirect> },
+    {
+      index: true,
+      element: (
+        <RoleRedirect>
+          <HomePage />
+        </RoleRedirect>
+      ),
+    },
+    { path: "tours", element: <ToursPage /> },
     { path: "tour-detail/:slug", element: <TourDetailPage /> },
     { path: "blogs", element: <BlogPage /> },
     { path: "blogs/:slug", element: <BlogDetailPage /> },
@@ -39,7 +48,7 @@ const customerRoutes = {
     { path: "reset-password", element: <ResetPasswordForm /> },
     { path: "auth/google/success", element: <GoogleAuthSuccess /> },
     { path: "profile", element: <UserProfile /> },
-    { path: "booking-history", element: <BookingHistoryPage /> },/*.*/
+    { path: "booking-history", element: <BookingHistoryPage /> } /*.*/,
     { path: "payment-return", element: <PaymentReturn /> },
     // thêm các route khác ở đây
   ],

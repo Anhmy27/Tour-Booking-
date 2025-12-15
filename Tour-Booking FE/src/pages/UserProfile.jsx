@@ -92,9 +92,11 @@ const UserProfile = () => {
                   id="name"
                   type="text"
                   className="block w-full text-base px-7 py-5 bg-gray-100 rounded border-t-4 border-b-4 border-transparent focus:outline-none focus:border-b-[#77dada]"
-                  value={user.name}
+                  value={formData.name}
                   required
-                  onChange={(e) => setUser({ ...user, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                 />
               </div>
               <div>
