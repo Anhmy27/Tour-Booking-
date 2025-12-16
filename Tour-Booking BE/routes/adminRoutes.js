@@ -5,6 +5,7 @@ const {
   approveTour,
   getPendingTours,
   toggleUserStatus,
+  getAllBookings,
 } = require("./../controllers/adminController");
 const {
   getNewUsersAndPartners,
@@ -24,5 +25,6 @@ router.patch("/pendingTour/:tourId/approve", approveTour);
 router.get("/stats/view-new-user", getNewUsersAndPartners);
 router.patch("/users/:userId/toggle-status", toggleUserStatus);
 router.get("/stats/revenue", getRevenueStats);
+router.get("/bookings", getAllBookings);
 
 module.exports = router;

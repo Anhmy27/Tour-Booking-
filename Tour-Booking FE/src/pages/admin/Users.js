@@ -151,7 +151,7 @@ export default function Users() {
           className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-sm"
         >
           <UserPlusIcon className="h-5 w-5 mr-2" />
-          Tạo tài khoản đối tác
+          Tạo tài khoản Manager 
         </button>
       </div>
 
