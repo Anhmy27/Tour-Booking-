@@ -7,16 +7,20 @@ const TourReviews = ({ tourId }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!tourId) return;
+    if (!tourId) {
+      setLoading(false);
+      return;
+    }
 
     const fetchReviews = async () => {
       try {
         const res = await axios.get(
           `${process.env.REACT_APP_BACKEND_URL}reviews/tour/${tourId}`
         );
-        setReviews(res.data.data);
+        setReviews(res.data.data || []);
       } catch (err) {
         console.error("Lỗi khi lấy đánh giá:", err);
+        setReviews([]);
       } finally {
         setLoading(false);
       }
