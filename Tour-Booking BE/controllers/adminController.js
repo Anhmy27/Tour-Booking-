@@ -38,7 +38,7 @@ const createPartnerAccount = catchAsync(async (req, res, next) => {
     role: "partner",
     password: temporaryPassword,
     passwordConfirm: temporaryPassword,
-    description: description ,
+    description: description,
     active: true,
   });
   console.log(
@@ -237,6 +237,6 @@ module.exports = {
   createPartnerAccount,
   approveTour,
   getPendingTours,
-  banUser,
+  toggleUserStatus,
   getAllBookings,
 };
