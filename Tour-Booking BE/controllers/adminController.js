@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const Tour = require("../models/tourModel");
+const Booking = require("../models/bookingModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 const { generateRandomPassword } = require("./../utils/passwordUtils");
@@ -219,10 +220,66 @@ const banUser = catchAsync(async (req, res, next) => {
     },
   });
 });
+
+const getAllBookings = catchAsync(async (req, res) => {
+  const { page = 1, limit = 10, paid, startDate, endDate } = req.query;
+
+  // Tạo filter
+  const filters = {};
+  if (paid !== undefined) {
+    filters.paid = paid === "true";
+  }
+  if (startDate || endDate) {
+    filters.startDate = {};
+    if (startDate) filters.startDate.$gte = new Date(startDate);
+    if (endDate) filters.startDate.$lte = new Date(endDate);
+  }
+
+  const { finalQuery, paginationOptions } = buildPaginatedQuery({
+    query: req.query,
+    filters,
+    searchFields: [],
+    page,
+    limit,
+    sort: "-createdAt",
+  });
+
+  const [totalBookings, bookings] = await Promise.all([
+    Booking.countDocuments(finalQuery),
+    Booking.find(finalQuery)
+      .select("tour user startDate numberOfPeople price paid createdAt")
+      .populate({
+        path: "user",
+        select: "name email photo role",
+      })
+      .populate({
+        path: "tour",
+        select: "name price imageCover duration partner",
+        populate: {
+          path: "partner",
+          select: "name email",
+        },
+      })
+      .skip(paginationOptions.skip)
+      .limit(paginationOptions.limit)
+      .sort(paginationOptions.sort),
+  ]);
+
+  res.status(200).json({
+    status: "success",
+    results: bookings.length,
+    total: totalBookings,
+    currentPage: Number(page),
+    totalPages: Math.ceil(totalBookings / limit),
+    data: { bookings },
+  });
+});
+
 module.exports = {
   getAllUserForAdmin,
   createPartnerAccount,
   approveTour,
   getPendingTours,
   banUser,
+  getAllBookings,
 };

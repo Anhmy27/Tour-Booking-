@@ -113,8 +113,22 @@ exports.createBooking = catchAsync(async (req, res, next) => {
 });
 
 exports.getMyBookings = catchAsync(async (req, res) => {
+  // Tự động hủy các booking chưa thanh toán và đã quá ngày khởi hành
+  const now = new Date();
+  await Booking.updateMany(
+    {
+      user: req.user.id,
+      paid: false,
+      startDate: { $lt: now },
+      status: { $ne: "cancelled" },
+    },
+    {
+      status: "cancelled",
+    }
+  );
+
   const bookings = await Booking.find({ user: req.user.id })
-    .populate("tour", "name imageCover startDates price")
+    .populate("tour", "name imageCover startDates price duration")
     .sort({ createdAt: -1 });
 
   res.status(200).json({
@@ -174,14 +188,25 @@ exports.createMoMoPayment = catchAsync(async (req, res, next) => {
 
   const totalAmount = tour.price * numberOfPeople;
 
-  const booking = await Booking.create({
+  // Check if there's already an unpaid booking for this tour, user, and date
+  let booking = await Booking.findOne({
     tour: tourId,
     user: req.user.id,
-    price: totalAmount,
-    numberOfPeople,
-    startDate,
+    startDate: new Date(startDate),
     paid: false,
   });
+
+  // If no unpaid booking exists, create a new one
+  if (!booking) {
+    booking = await Booking.create({
+      tour: tourId,
+      user: req.user.id,
+      price: totalAmount,
+      numberOfPeople,
+      startDate,
+      paid: false,
+    });
+  }
 
   const orderInfo = `Thanh toan tour ${tour.name}`;
   // Add timestamp to make orderId unique for retries
@@ -204,7 +229,11 @@ exports.createMoMoPayment = catchAsync(async (req, res, next) => {
       },
     });
   } catch (error) {
-    await Booking.findByIdAndDelete(booking._id);
+    // Only delete if this was a newly created booking (not an existing unpaid one)
+    const existingBooking = await Booking.findById(booking._id);
+    if (existingBooking && !existingBooking.paid) {
+      await Booking.findByIdAndDelete(booking._id);
+    }
     return next(new AppError(`MoMo payment failed: ${error.message}`, 500));
   }
 });
@@ -238,6 +267,7 @@ exports.handleMoMoReturn = catchAsync(async (req, res, next) => {
 
   if (parseInt(resultCode) === 0) {
     booking.paid = true;
+    booking.status = "confirmed";
     await booking.save();
     console.log("✅ Payment successful:", orderId);
     

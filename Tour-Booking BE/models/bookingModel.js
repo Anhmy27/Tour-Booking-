@@ -34,17 +34,19 @@ const bookingSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    status: {
+      type: String,
+      enum: ["pending", "confirmed", "cancelled"],
+      default: "pending",
+    },
   },
   {
     versionKey: false,
   }
 );
 
-// Optional: populate user & tour when finding bookings
-bookingSchema.pre(/^find/, function (next) {
-  this.populate("tour").populate("user");
-  next();
-});
+// Không dùng auto-populate để tránh xung đột
+// Sẽ populate thủ công khi cần thiết trong controller
 
 const Booking = mongoose.model("Booking", bookingSchema);
 module.exports = Booking;
