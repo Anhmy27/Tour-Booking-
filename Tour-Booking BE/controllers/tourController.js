@@ -359,7 +359,7 @@ exports.getTourBySlug = catchAsync(async (req, res, next) => {
   });
 });
 
-// Update tour status by partner if it is active
+// Update tour status by partner - toggle between active and inactive
 exports.updateTourStatusByPartner = catchAsync(async (req, res, next) => {
   const tourId = req.params.tourId;
   const tour = await Tour.findById(tourId);
@@ -372,16 +372,27 @@ exports.updateTourStatusByPartner = catchAsync(async (req, res, next) => {
     return next(new AppError("Bạn không có quyền cập nhật tour này", 403));
   }
 
-  // Check tour status
+  // Toggle status: active -> inactive, inactive -> active
+  // Note: Chỉ có thể toggle từ active sang inactive và ngược lại
+  // Không thể toggle từ pending (chờ admin duyệt)
   if (tour.status === "active") {
     tour.status = "inactive";
     await tour.save();
     res.status(200).json({
       status: "success",
-      message: "Tour đã được cập nhật thành không hoạt động",
+      message: "Tour đã được ẩn khỏi homepage",
+      data: { tour },
+    });
+  } else if (tour.status === "inactive") {
+    tour.status = "active";
+    await tour.save();
+    res.status(200).json({
+      status: "success",
+      message: "Tour đã được hiển thị trên homepage",
+      data: { tour },
     });
   } else {
-    return next(new AppError("Tour đã ở trạng thái không hoạt động", 400));
+    return next(new AppError("Không thể thay đổi trạng thái tour đang chờ duyệt", 400));
   }
 });
 

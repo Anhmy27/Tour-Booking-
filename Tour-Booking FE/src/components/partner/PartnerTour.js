@@ -32,6 +32,38 @@ const PartnerTour = () => {
     fetchTours();
   }, []);
 
+  // Toggle ẩn/hiện tour trên homepage
+  const toggleTourVisibility = async (tourId) => {
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}tours/partner/update-status/${tourId}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+      if (response.ok) {
+        // Cập nhật trạng thái tour trong danh sách
+        setTours(
+          tours.map((tour) =>
+            tour._id === tourId
+              ? { ...tour, status: tour.status === "active" ? "inactive" : "active" }
+              : tour
+          )
+        );
+        alert(data.message || "Cập nhật thành công!");
+      } else {
+        alert(data.message || "Lỗi cập nhật trạng thái tour");
+      }
+    } catch (error) {
+      console.error("Lỗi cập nhật tour:", error);
+      alert("Có lỗi xảy ra khi cập nhật trạng thái tour!");
+    }
+  };
+
   const filteredTours = tours
     .filter((tour) =>
       tour.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -172,6 +204,23 @@ const PartnerTour = () => {
                         >
                           Sửa
                         </button>
+                        {tour.status === "active" || tour.status === "inactive" ? (
+                          <button
+                            onClick={() => toggleTourVisibility(tour._id)}
+                            className={`px-3 py-1 text-sm rounded text-white ${
+                              tour.status === "active"
+                                ? "bg-orange-600 hover:bg-orange-700"
+                                : "bg-green-600 hover:bg-green-700"
+                            }`}
+                            title={
+                              tour.status === "active"
+                                ? "Ẩn tour khỏi homepage"
+                                : "Hiện tour trên homepage"
+                            }
+                          >
+                            {tour.status === "active" ? "🙈 Ẩn" : "👁️ Hiện"}
+                          </button>
+                        ) : null}
                         <button
                           onClick={() => deleteTour(tour._id)}
                           className="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 rounded text-white"
