@@ -44,6 +44,8 @@ const CreateTour = () => {
   const [coverFile, setCoverFile] = useState(null);
   const [imageFiles, setImageFiles] = useState([]);
   const [dates, setDates] = useState([]);
+  const [savedTemplates, setSavedTemplates] = useState([]);
+  const [showTemplates, setShowTemplates] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -52,6 +54,12 @@ const CreateTour = () => {
     const discountedPrice = price - (price * discount) / 100;
     setFinalPrice(discountedPrice > 0 ? discountedPrice : 0);
   }, [formData.price, formData.priceDiscount]);
+
+  // Load saved templates từ localStorage khi component mount
+  useEffect(() => {
+    const templates = JSON.parse(localStorage.getItem("tourTemplates") || "[]");
+    setSavedTemplates(templates);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -206,6 +214,91 @@ const CreateTour = () => {
     }));
   };
 
+  // Lưu template vào localStorage
+  const saveTemplate = () => {
+    if (!formData.name.trim()) {
+      alert("Vui lòng nhập tên tour trước khi lưu template!");
+      return;
+    }
+
+    // Convert dates to ISO strings (handle both Date objects and DatePicker objects)
+    const datesToSave = dates.map(date => {
+      if (date && typeof date.toDate === 'function') {
+        return date.toDate().toISOString();
+      } else if (date instanceof Date) {
+        return date.toISOString();
+      }
+      return date;
+    });
+
+    const template = {
+      id: Date.now().toString(),
+      name: formData.name,
+      savedAt: new Date().toLocaleString("vi-VN"),
+      formData: { ...formData },
+      locations: [...locations],
+      dates: datesToSave,
+      startLocationCoords: [...startLocationCoords],
+    };
+
+    const templates = JSON.parse(localStorage.getItem("tourTemplates") || "[]");
+    templates.unshift(template); // Thêm vào đầu danh sách
+    localStorage.setItem("tourTemplates", JSON.stringify(templates));
+    setSavedTemplates(templates);
+    alert("Đã lưu template thành công! ✅");
+  };
+
+  // Load template từ localStorage
+  const loadTemplate = (template) => {
+    if (!window.confirm(`Bạn có muốn load template "${template.name}"? Dữ liệu hiện tại sẽ bị thay thế.`)) {
+      return;
+    }
+
+    setFormData(template.formData);
+    setLocations(template.locations || []);
+    
+    // Convert ISO strings back to Date objects for DatePicker
+    // react-multi-date-picker accepts Date objects or timestamps
+    const loadedDates = template.dates && template.dates.length > 0 
+      ? template.dates.map(dateStr => {
+          try {
+            if (typeof dateStr === 'string') {
+              const date = new Date(dateStr);
+              // Validate date
+              if (isNaN(date.getTime())) {
+                console.warn('Invalid date:', dateStr);
+                return null;
+              }
+              return date;
+            }
+            return dateStr;
+          } catch (error) {
+            console.error('Error parsing date:', dateStr, error);
+            return null;
+          }
+        }).filter(date => date !== null) 
+      : [];
+    setDates(loadedDates);
+    
+    // Lưu ý: file images không thể restore từ localStorage, người dùng cần upload lại
+    setCoverFile(null);
+    setImageFiles([]);
+    setShowTemplates(false);
+    alert("Đã load template thành công! ⚠️ Lưu ý: Bạn cần upload lại ảnh.");
+  };
+
+  // Xóa template
+  const deleteTemplate = (templateId) => {
+    if (!window.confirm("Bạn có chắc muốn xóa template này?")) {
+      return;
+    }
+
+    const templates = savedTemplates.filter(t => t.id !== templateId);
+    localStorage.setItem("tourTemplates", JSON.stringify(templates));
+    setSavedTemplates(templates);
+    alert("Đã xóa template!");
+  };
+
   return (
     <div className="flex min-h-screen bg-gray-100">
       <div className="w-64 bg-gray-900 text-white">
@@ -215,16 +308,75 @@ const CreateTour = () => {
       <div className="flex-1">
         <Header />
         <div className="p-10">
-          <div className="max-w-5xl mx-auto bg-white p-8 rounded-2xl shadow-xl">
-            <h2 className="text-3xl font-bold text-center text-indigo-600 mb-8">
-              ✨ Tạo Tour Mới
-            </h2>
-            <form
+          <div className="max-w-5xl mx-auto">
+            {/* Templates Section */}
+            <div className="bg-white p-6 rounded-2xl shadow-xl mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-bold text-indigo-600">
+                  💾 Templates đã lưu ({savedTemplates.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowTemplates(!showTemplates)}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition"
+                >
+                  {showTemplates ? "🔼 Ẩn templates" : "🔽 Xem templates"}
+                </button>
+              </div>
+              
+              {showTemplates && (
+                <div className="space-y-3">
+                  {savedTemplates.length === 0 ? (
+                    <p className="text-gray-500 text-center py-4">
+                      Chưa có template nào được lưu. Hãy tạo tour và nhấn "Lưu làm template" để lưu lại!
+                    </p>
+                  ) : (
+                    savedTemplates.map((template) => (
+                      <div
+                        key={template.id}
+                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-indigo-400 transition"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-800">{template.name}</h4>
+                          <p className="text-sm text-gray-500">
+                            Đã lưu: {template.savedAt}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => loadTemplate(template)}
+                            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm"
+                          >
+                            📥 Load
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteTemplate(template.id)}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                          >
+                            🗑️ Xóa
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Form Section */}
+            <div className="bg-white p-8 rounded-2xl shadow-xl">
+              <h2 className="text-3xl font-bold text-center text-indigo-600 mb-8">
+                ✨ Tạo Tour Mới
+              </h2>
+              <form
               onSubmit={handleSubmit}
               className="grid grid-cols-1 md:grid-cols-2 gap-6"
             >
               <input
                 name="name"
+                value={formData.name}
                 onChange={handleChange}
                 placeholder="Tên tour"
                 className={inputClass}
@@ -233,6 +385,7 @@ const CreateTour = () => {
               <input
                 type="number"
                 name="duration"
+                value={formData.duration}
                 placeholder="Thời gian (số ngày)"
                 onChange={handleChange}
                 required
@@ -240,6 +393,7 @@ const CreateTour = () => {
               />
               <input
                 name="maxGroupSize"
+                value={formData.maxGroupSize}
                 onChange={handleChange}
                 type="number"
                 placeholder="Số lượng tối đa"
@@ -248,6 +402,7 @@ const CreateTour = () => {
               />
               <input
                 name="price"
+                value={formData.price}
                 onChange={handleChange}
                 type="number"
                 placeholder="Giá (VND)"
@@ -256,6 +411,7 @@ const CreateTour = () => {
               />
               <input
                 name="priceDiscount"
+                value={formData.priceDiscount}
                 onChange={handleChange}
                 type="number"
                 placeholder="Giảm giá (%)"
@@ -268,6 +424,7 @@ const CreateTour = () => {
                 <div className="space-y-3">
                   <input
                     name="address"
+                    value={formData.startLocation.address}
                     onChange={handleChange}
                     placeholder="Địa chỉ xuất phát"
                     className={inputClass}
@@ -275,6 +432,7 @@ const CreateTour = () => {
                   />
                   <input
                     name="descriptionStart"
+                    value={formData.startLocation.description}
                     onChange={handleChange}
                     placeholder="Mô tả địa điểm xuất phát"
                     className={inputClass}
@@ -353,6 +511,7 @@ const CreateTour = () => {
 
               <textarea
                 name="summary"
+                value={formData.summary}
                 onChange={handleChange}
                 placeholder="Tóm tắt tour"
                 className={`${textareaClass} md:col-span-2`}
@@ -360,6 +519,7 @@ const CreateTour = () => {
               />
               <textarea
                 name="description"
+                value={formData.description}
                 onChange={handleChange}
                 placeholder="Mô tả chi tiết"
                 className={`${textareaClass} md:col-span-2`}
@@ -368,7 +528,7 @@ const CreateTour = () => {
 
               <div className="md:col-span-2">
                 <label className="text-sm text-gray-600 mb-2 block">
-                  Ngày khởi hành (có thể chọn nhiều)
+                  Ngày khởi hành
                 </label>
                 <div className="bg-white p-4 rounded-xl shadow w-fit">
                   <DatePicker
@@ -552,19 +712,27 @@ const CreateTour = () => {
               <div className="md:col-span-2 flex flex-col sm:flex-row gap-4 mt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
+                  className="flex-1 bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700 font-medium"
                 >
                   🚀 Tạo Tour
                 </button>
                 <button
                   type="button"
+                  onClick={saveTemplate}
+                  className="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 font-medium"
+                >
+                  💾 Lưu làm Template
+                </button>
+                <button
+                  type="button"
                   onClick={() => navigate("/partner/dashboard")}
-                  className="flex-1 bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700"
+                  className="flex-1 bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 font-medium"
                 >
                   🔙 Về Dashboard
                 </button>
               </div>
             </form>
+          </div>
           </div>
         </div>
       </div>

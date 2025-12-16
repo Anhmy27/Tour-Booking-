@@ -172,13 +172,7 @@ const TourInfo = ({ tour, onSelectLocation }) => {
             <li className="flex items-start gap-3">
               <FaClock className="text-cyan-500 mt-1" size={20} />
               <span>
-                <strong>Thời gian:</strong> {tour.duration}
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <FaUsers className="text-cyan-500 mt-1" size={20} />
-              <span>
-                <strong>Số lượng tối đa:</strong> {tour.maxGroupSize} người
+                <strong>Thời gian:</strong> {tour.duration} ngày 
               </span>
             </li>
             
@@ -194,29 +188,14 @@ const TourInfo = ({ tour, onSelectLocation }) => {
                 {loadingAvailability ? (
                   <p className="text-sm text-gray-500 ml-7">Đang tải...</p>
                 ) : (
-                  <div className="ml-7 space-y-1.5">
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">Đã đặt:</span>{" "}
-                      <span className="text-orange-600 font-bold text-base">
-                        {availability.bookedSlots}
-                      </span>{" "}
-                      người
-                    </p>
-                    <p className="text-sm text-gray-700">
-                      <span className="font-medium">Còn trống:</span>{" "}
-                      <span className="text-green-600 font-bold text-base">
-                        {availability.remainingSlots}
-                      </span>{" "}
-                      chỗ
-                    </p>
-                    {availability.remainingSlots === 0 && (
-                      <p className="text-red-600 font-bold mt-2">
-                        ❌ Đã hết chỗ cho ngày này!
+                  <div className="ml-7">
+                    {availability.remainingSlots === 0 ? (
+                      <p className="text-red-600 font-bold">
+                        ❌ Tour đã đủ người
                       </p>
-                    )}
-                    {availability.remainingSlots > 0 && availability.remainingSlots < 5 && (
-                      <p className="text-orange-600 font-semibold mt-2">
-                        ⚠️ Chỉ còn {availability.remainingSlots} chỗ trống!
+                    ) : (
+                      <p className="text-green-600 font-semibold">
+                        ✅ Có thể đặt tour
                       </p>
                     )}
                   </div>
@@ -282,32 +261,9 @@ const TourInfo = ({ tour, onSelectLocation }) => {
               </div>
             </div>
             
-            {/* Thông báo và hướng dẫn */}
-            {availability && selectedDate && (
-              <div className="mt-3 space-y-2">
-                {numAdults >= availability.remainingSlots && availability.remainingSlots > 0 && (
-                  <p className="text-sm text-red-500">
-                    Đã đạt số chỗ còn trống: {availability.remainingSlots} người
-                  </p>
-                )}
-                <p className="text-sm text-gray-600">
-                  Bạn đang đặt <span className="font-bold text-cyan-600">{numAdults}</span> người.
-                  {availability.remainingSlots - numAdults > 0 && (
-                    <span> Còn có thể đặt thêm <span className="font-bold text-green-600">{availability.remainingSlots - numAdults}</span> người.</span>
-                  )}
-                </p>
-              </div>
-            )}
-            
             {!selectedDate && (
               <p className="text-sm text-gray-500 mt-2">
-                Vui lòng chọn ngày khởi hành để xem số chỗ còn trống
-              </p>
-            )}
-            
-            {numAdults === tour?.maxGroupSize && !availability && (
-              <p className="text-sm text-red-500 mt-2">
-                Đã đạt số lượng tối đa: {tour.maxGroupSize} người
+                Vui lòng chọn ngày khởi hành để xem tình trạng tour
               </p>
             )}
             {/* Tổng giá */}

@@ -16,16 +16,14 @@ const SignUpForm = () => {
       alert("Mật khẩu không trùng khớp!");
       return;
     }
-    if (await signup(name, email, password, confirmPassword))
-      navigate("/confirm-email");
+    if (await signup(name, email, password, confirmPassword)) {
+      // Đã bỏ navigate confirm-email, signup sẽ tự động đăng nhập
+    }
   };
 
   useEffect(() => {
     if (user) {
-      if (!user.active) {
-        navigate("/confirm-email");
-        return;
-      }
+      // Đã bỏ kiểm tra user.active
       switch (user.role?.trim().toLowerCase()) {
         case "admin":
           navigate("/admin");

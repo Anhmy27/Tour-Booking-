@@ -3,7 +3,7 @@ import { TourContext } from "../../contexts/TourContext";
 //import banner from "assets/banner.mp4";
 const HeroSection = () => {
   const { searchTours } = useContext(TourContext);
-  const [location, setLocation] = useState("");
+  const [rating, setRating] = useState("");
   const [keyword, setKeyword] = useState("");
   const [price, setPrice] = useState("");
 
@@ -11,12 +11,15 @@ const HeroSection = () => {
     const [minPrice, maxPrice] = price ? price.split("-") : [null, null];
 
     const params = {
+      page: 1,
       search: keyword,
-      location: location !== "Tất cả địa điểm" ? location : undefined,
+      ratingsAverage: rating !== "all" ? rating : undefined,
       minPrice: minPrice ? Number(minPrice) * 1000 : undefined,
       maxPrice: maxPrice ? Number(maxPrice) * 1000 : undefined,
     };
 
+    // Xóa URL params khi search mới
+    window.history.replaceState({}, "", window.location.pathname);
     searchTours(params);
   };
   return (
@@ -76,7 +79,7 @@ const HeroSection = () => {
                 </label>
               </div>
 
-              {/* Location Dropdown */}
+              {/* Rating Dropdown */}
               <div className="flex-1">
                 <label className="relative flex items-center border border-gray-300 rounded-2xl">
                   <svg
@@ -87,23 +90,21 @@ const HeroSection = () => {
                     xmlns="http://www.w3.org/2000/svg"
                   >
                     <path
-                      d="M5.7 15C4.03377 15.6353 3 16.5205 3 17.4997C3 19.4329 7.02944 21 12 21C16.9706 21 21 19.4329 21 17.4997C21 16.5205 19.9662 15.6353 18.3 15M12 9H12.01M18 9C18 13.0637 13.5 15 12 18C10.5 15 6 13.0637 6 9C6 5.68629 8.68629 3 12 3C15.3137 3 18 5.68629 18 9ZM13 9C13 9.55228 12.5523 10 12 10C11.4477 10 11 9.55228 11 9C11 8.44772 11.4477 8 12 8C12.5523 8 13 8.44772 13 9Z"
+                      d="M11.24 4.17C11.48 3.51 11.59 3.18 11.76 3.08C11.91 3 12.09 3 12.24 3.08C12.41 3.18 12.52 3.51 12.76 4.17L14.29 8.58C14.35 8.77 14.38 8.86 14.44 8.93C14.5 9 14.56 9.04 14.64 9.07C14.72 9.11 14.82 9.11 15.03 9.11L19.69 9.21C20.39 9.22 20.74 9.23 20.88 9.36C21 9.48 21.06 9.65 21.03 9.82C20.99 10.01 20.71 10.22 20.15 10.65L16.44 13.46C16.28 13.58 16.2 13.64 16.15 13.72C16.11 13.79 16.08 13.87 16.08 13.95C16.07 14.04 16.1 14.14 16.16 14.33L17.51 18.79C17.71 19.47 17.81 19.8 17.73 19.98C17.65 20.13 17.51 20.24 17.34 20.26C17.15 20.28 16.86 20.08 16.28 19.68L12.46 17.02C12.29 16.9 12.21 16.85 12.12 16.82C12.04 16.8 11.96 16.8 11.88 16.82C11.79 16.85 11.71 16.9 11.54 17.02L7.72 19.68C7.14 20.08 6.85 20.28 6.66 20.26C6.49 20.24 6.35 20.13 6.27 19.98C6.19 19.8 6.29 19.47 6.49 18.79L7.84 14.33C7.9 14.14 7.93 14.04 7.92 13.95C7.92 13.87 7.89 13.79 7.85 13.72C7.8 13.64 7.72 13.58 7.56 13.46L3.85 10.65C3.29 10.22 3.01 10.01 2.97 9.82C2.94 9.65 2.99 9.48 3.12 9.36C3.26 9.23 3.61 9.22 4.31 9.21L8.97 9.11C9.18 9.11 9.28 9.11 9.36 9.07C9.44 9.04 9.5 9 9.56 8.93C9.62 8.86 9.65 8.77 9.71 8.58L11.24 4.17Z"
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                    ></path>
+                    />
                   </svg>
                   <select
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    value={rating}
+                    onChange={(e) => setRating(e.target.value)}
                     className="p-3  w-full border-none rounded-2xl focus:ring-2 focus:ring-cyan-400 appearance-none"
                   >
-                    <option>Tất cả địa điểm</option>
-                    <option>Hạ Long</option>
-                    <option>Đà Nẵng</option>
-                    <option>Phú Quốc</option>
-                    <option>Hội An</option>
-                    <option>Huế</option>
+                    <option value="all">Tất cả đánh giá</option>
+                    <option value="5">5 sao</option>
+                    <option value="4">Từ 4 sao</option>
+                    <option value="3">Từ 3 sao</option>
                   </select>
                   <svg
                     className="h-6 w-6 mr-3 text-gray-500"

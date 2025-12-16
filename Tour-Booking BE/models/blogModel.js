@@ -42,10 +42,6 @@ const blogSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: "Tour",
     },
-    views: {
-      type: Number,
-      default: 0,
-    },
     publishedAt: Date,
   },
   {

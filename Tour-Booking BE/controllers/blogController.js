@@ -14,12 +14,11 @@ exports.getPublicBlogs = catchAsync(async (req, res, next) => {
     filter.$text = { $search: search };
   }
   
-  let query = Blog.find(filter).populate("author", "name email");/*.*/
+  let query = Blog.find(filter).populate("author", "name email");
   
   // Sort
   if (sort === "newest") query = query.sort("-createdAt");
   else if (sort === "oldest") query = query.sort("createdAt");
-  else if (sort === "popular") query = query.sort("-views");
   else query = query.sort("-createdAt");
   
   const blogs = await query.populate("linkedTour", "name slug");
@@ -67,7 +66,6 @@ exports.getMyBlogs = catchAsync(async (req, res, next) => {
   // Sort
   if (sort === "newest") query = query.sort("-createdAt");
   else if (sort === "oldest") query = query.sort("createdAt");
-  else if (sort === "popular") query = query.sort("-views");
   else query = query.sort("-createdAt");
   
   const blogs = await query.populate("linkedTour", "name slug");
@@ -192,23 +190,7 @@ exports.deleteBlog = catchAsync(async (req, res, next) => {
   });
 });
 
-// Tăng view count (public)
-exports.incrementView = catchAsync(async (req, res, next) => {
-  const blog = await Blog.findByIdAndUpdate(
-    req.params.id,
-    { $inc: { views: 1 } },
-    { new: true }
-  );
-  
-  if (!blog) {
-    return next(new AppError("Không tìm thấy blog", 404));
-  }
-  
-  res.status(200).json({
-    status: "success",
-    data: { blog },
-  });
-});
+
 
 // Upload ảnh vào nội dung blog
 exports.uploadImage = catchAsync(async (req, res, next) => {

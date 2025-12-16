@@ -59,15 +59,7 @@ export const authService = {
       withCredentials: true,
     }),
 
-  confirmEmail: (pin) =>
-    axios.get(`${process.env.REACT_APP_BACKEND_URL}auth/confirmEmail/${pin}`, {
-      withCredentials: true,
-    }),
-
-  resendConfirmEmail: () =>
-    axios.get(`${process.env.REACT_APP_BACKEND_URL}auth/resendConfirmEmail`, {
-      withCredentials: true,
-    }),
+  // Đã bỏ confirmEmail và resendConfirmEmail
 
   forgotPassword: (email) =>
     axios.post(`${process.env.REACT_APP_BACKEND_URL}auth/forgotPassword`, {

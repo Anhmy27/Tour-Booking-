@@ -52,18 +52,12 @@ const signToken = (id) => {
 const createSendToken = (user, statusCode, req, res) => {
   const token = signToken(user._id);
 
-  // Nếu muốn session cookie (xóa khi đóng browser), bỏ expires
-  // Nếu muốn persistent cookie (lưu lâu dài), dùng expires
   const cookieOptions = {
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
     httpOnly: true,
-    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
-    sameSite: "Lax",
   };
-
-  // Uncomment dòng dưới nếu muốn cookie lưu lâu dài (không xóa khi đóng browser)
-  // cookieOptions.expires = new Date(
-  //   Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-  // );
 
   res.cookie("jwt", token, cookieOptions);
 
@@ -98,21 +92,10 @@ exports.signup = catchAsync(async (req, res, next) => {
     email: req.body.email,
     password: req.body.password,
     passwordConfirm: req.body.passwordConfirm,
+    active: true, // Tự động active khi đăng ký
   });
 
-  const confirmPin = newUser.createConfirmPin();
-
-  await newUser.save({ validateBeforeSave: false });
-
-  try {
-    await new Email(newUser, { pin: confirmPin }).sendConfirmEmail();
-    createSendToken(newUser, 201, req, res);
-    /*eslint-disable-next-line*/
-  } catch (err) {
-    newUser.confirmPin = undefined;
-    await newUser.save({ validateBeforeSave: false });
-    return next(new AppError("Có lỗi khi gửi email. Hãy thử lại sau!"), 500);
-  }
+  createSendToken(newUser, 201, req, res);
 });
 
 exports.login = catchAsync(async (req, res, next) => {
@@ -137,8 +120,8 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Tài khoản hoặc mật khẩu không đúng", 401));
   }
 
-  // 3) If everything ok, send token to client
-  createSendToken(user, 200, req, res);
+    // Đã bỏ kiểm tra xác thực email (user.active)
+    createSendToken(user, 200, req, res);
 });
 
 exports.logout = (req, res) => {
@@ -164,8 +147,6 @@ exports.googleCallback = catchAsync(async (req, res, next) => {
   // Set cookie
   const cookieOptions = {
     httpOnly: true,
-    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
-    sameSite: "Lax",
   };
 
   res.cookie("jwt", token, cookieOptions);
@@ -263,50 +244,7 @@ exports.getProfile = catchAsync(async (req, res) => {
   });
 });
 
-exports.confirmEmail = catchAsync(async (req, res, next) => {
-  const { pin } = req.params;
-
-  const user = await User.findById(req.user.id);
-
-  if (!user.confirmEmail(pin))
-    return next(new AppError("Mã PIN không hợp lệ!", 400));
-
-  user.save({ validateBeforeSave: false });
-
-  const url = `${process.env.FRONT_END_URI}/profile`;
-  await new Email(user, { url }).sendWelcome();
-
-  res.status(200).json({
-    status: "success",
-    data: {
-      data: user,
-    },
-  });
-});
-
-exports.resendConfirmEmail = catchAsync(async (req, res, next) => {
-  const user = await User.findById(req.user.id);
-
-  if (user.active)
-    return next(new AppError("Tài khoản đã được xác nhận!", 400));
-
-  const confirmPin = user.createConfirmPin();
-
-  await user.save({ validateBeforeSave: false });
-
-  try {
-    await new Email(user, { pin: confirmPin }).sendConfirmEmail();
-    res.status(200).json({
-      status: "success",
-      message: "Mail xác nhận đã gửi lại thành công!",
-    });
-    /*eslint-disable-next-line*/
-  } catch (err) {
-    user.confirmPin = undefined;
-    await user.save({ validateBeforeSave: false });
-    return next(new AppError("Có lỗi khi gửi email. Hãy thử lại sau!"), 500);
-  }
-});
+// Đã bỏ exports.confirmEmail và exports.resendConfirmEmail
 
 exports.forgotPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on POSTed email
@@ -317,26 +255,14 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 
   // 2) Generate the random reset token
   const resetToken = user.createPasswordResetToken();
-
   await user.save({ validateBeforeSave: false });
 
-  // 3) Send it to user's email
-  try {
-    const resetURL = `${process.env.FRONT_END_URI}/reset-password?token=${resetToken}&email=${user.email}`;
-    await new Email(user, { url: resetURL }).sendPasswordReset();
-
-    res.status(200).json({
-      status: "success",
-      message: "Mail xác nhận đã được gửi tới email của bạn!",
-    });
-    /*eslint-disable-next-line*/
-  } catch (err) {
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    await user.save({ validateBeforeSave: false });
-
-    return next(new AppError("Có lỗi xảy ra khi gửi mail!"), 500);
-  }
+  // 3) Return token without sending email
+  res.status(200).json({
+    status: "success",
+    message: "Xác nhận thành công! Vui lòng đặt lại mật khẩu.",
+    token: resetToken,
+  });
 });
 
 exports.resetPassword = catchAsync(async (req, res, next) => {
