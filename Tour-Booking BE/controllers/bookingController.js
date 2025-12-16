@@ -161,7 +161,7 @@ exports.getPartnerBookings = catchAsync(async (req, res) => {
 
 // MoMo Payment
 exports.createMoMoPayment = catchAsync(async (req, res, next) => {
-  const { tourId, numberOfPeople, startDate } = req.body;
+  const { tourId, numberOfPeople, startDate, bookingId } = req.body;
 
   if (!tourId || !numberOfPeople || !startDate) {
     return next(new AppError("Missing required fields", 400));
@@ -174,14 +174,40 @@ exports.createMoMoPayment = catchAsync(async (req, res, next) => {
 
   const totalAmount = tour.price * numberOfPeople;
 
-  const booking = await Booking.create({
-    tour: tourId,
-    user: req.user.id,
-    price: totalAmount,
-    numberOfPeople,
-    startDate,
-    paid: false,
-  });
+  let booking;
+  let isExistingBooking = false;
+
+  // Nếu có bookingId, sử dụng booking đã tồn tại (thanh toán lại)
+  if (bookingId) {
+    booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return next(new AppError("Booking not found", 404));
+    }
+
+    // Kiểm tra booking thuộc về user hiện tại
+    if (booking.user.toString() !== req.user.id.toString()) {
+      return next(
+        new AppError("You do not have permission to pay for this booking", 403)
+      );
+    }
+
+    // Kiểm tra booking đã thanh toán chưa
+    if (booking.paid) {
+      return next(new AppError("This booking has already been paid", 400));
+    }
+
+    isExistingBooking = true;
+  } else {
+    // Tạo booking mới nếu không có bookingId
+    booking = await Booking.create({
+      tour: tourId,
+      user: req.user.id,
+      price: totalAmount,
+      numberOfPeople,
+      startDate,
+      paid: false,
+    });
+  }
 
   const orderInfo = `Thanh toan tour ${tour.name}`;
   // Add timestamp to make orderId unique for retries
@@ -204,7 +230,10 @@ exports.createMoMoPayment = catchAsync(async (req, res, next) => {
       },
     });
   } catch (error) {
-    await Booking.findByIdAndDelete(booking._id);
+    // Chỉ xóa booking nếu là booking mới tạo
+    if (!isExistingBooking) {
+      await Booking.findByIdAndDelete(booking._id);
+    }
     return next(new AppError(`MoMo payment failed: ${error.message}`, 500));
   }
 });
