@@ -27,7 +27,6 @@ module.exports = class Email {
       `${__dirname}/../public/email/${template}.pug`,
       {
         firstName: this.firstName,
-        subject,
         ...this.data,
       }
     );

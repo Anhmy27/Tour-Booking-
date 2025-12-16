@@ -40,7 +40,6 @@ const resizeBlogImage = catchAsync(async (req, res, next) => {
 // Public routes (không cần authentication)
 router.get("/public", blogController.getPublicBlogs);
 router.get("/public/:slug", blogController.getPublicBlog);
-router.patch("/public/:id/view", blogController.incrementView);
 
 // Protected routes - chỉ partner và admin
 router.use(authController.protect);

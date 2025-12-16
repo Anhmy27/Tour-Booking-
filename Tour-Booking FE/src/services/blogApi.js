@@ -39,10 +39,4 @@ export const blogService = {
     axios.delete(`${API_URL}blogs/${id}`, {
       withCredentials: true,
     }),
-
-  // Tăng view count
-  incrementView: (id) =>
-    axios.patch(`${API_URL}blogs/public/${id}/view`, {}, {
-      withCredentials: true,
-    }),
 };
