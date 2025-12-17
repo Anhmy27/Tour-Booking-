@@ -191,11 +191,11 @@ const TourInfo = ({ tour, onSelectLocation }) => {
                   <div className="ml-7">
                     {availability.remainingSlots === 0 ? (
                       <p className="text-red-600 font-bold">
-                        ❌ Tour đã đủ người
+                         Tour đã đủ người
                       </p>
                     ) : (
                       <p className="text-green-600 font-semibold">
-                        ✅ Có thể đặt tour
+                         Có thể đặt tour
                       </p>
                     )}
                   </div>
