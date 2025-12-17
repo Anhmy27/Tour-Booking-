@@ -120,8 +120,12 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError("Tài khoản hoặc mật khẩu không đúng", 401));
   }
 
-    // Đã bỏ kiểm tra xác thực email (user.active)
-    createSendToken(user, 200, req, res);
+  // 3) Check if account is active
+  if (!user.active) {
+    return next(new AppError("Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ admin!", 403));
+  }
+
+  createSendToken(user, 200, req, res);
 });
 
 exports.logout = (req, res) => {
@@ -131,11 +135,15 @@ exports.logout = (req, res) => {
   });
   res.status(200).json({ status: "success" });
 };
-
 exports.googleCallback = catchAsync(async (req, res, next) => {
   // req.user được set bởi passport
   if (!req.user) {
     return res.redirect(`${process.env.FRONT_END_URI}/login?error=google_auth_failed`);
+  }
+
+  // Check if account is active
+  if (!req.user.active) {
+    return res.redirect(`${process.env.FRONT_END_URI}/login?error=tai_khoan_bi_vo_hieu_hoa`);
   }
 
   // Tạo JWT token
