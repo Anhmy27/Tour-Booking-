@@ -73,7 +73,7 @@ const TourDetailPage = () => {
         startLocation={tour?.startLocation}
         selectedLocation={selectedLocation}
       />
-      <TourReviews tourId={tour?._id} />
+      {tour && <TourReviews tourId={tour.id} />}
     </div>
   );
 };
