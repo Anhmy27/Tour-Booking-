@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import dayjs from "dayjs";
-import { createMoMoPayment } from "../services/api";
+import { createMoMoPayment, cancelBooking } from "../services/api";
 
 const BookingHistoryPage = () => {
   const [bookings, setBookings] = useState([]);
@@ -11,6 +11,7 @@ const BookingHistoryPage = () => {
   const [reviewRating, setReviewRating] = useState(5);
   const [successMessage, setSuccessMessage] = useState("");
   const [paymentLoading, setPaymentLoading] = useState(null);
+  const [cancellingBookingId, setCancellingBookingId] = useState(null);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -75,6 +76,43 @@ const BookingHistoryPage = () => {
     }
   };
 
+  const handleCancelBooking = async (bookingId) => {
+    const confirmCancel = window.confirm(
+      "Bạn có chắc chắn muốn hủy booking này?\n\n" +
+        "Chính sách hoàn tiền:\n" +
+        "• ≥30 ngày trước tour: Hoàn 100%\n" +
+        "• ≥15 ngày: Hoàn 75%\n" +
+        "• ≥7 ngày: Hoàn 50%\n" +
+        "• ≥3 ngày: Hoàn 25%\n" +
+        "• <3 ngày: Không hoàn tiền"
+    );
+
+    if (!confirmCancel) return;
+
+    try {
+      setCancellingBookingId(bookingId);
+      const res = await cancelBooking(bookingId);
+
+      if (res.data.status === "success") {
+        alert(res.data.message);
+        // Refresh bookings
+        const bookingsRes = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}bookings/my`,
+          { withCredentials: true }
+        );
+        setBookings(bookingsRes.data.data);
+      }
+    } catch (error) {
+      console.error("Lỗi hủy booking:", error);
+      alert(
+        error.response?.data?.message ||
+          "Không thể hủy booking. Vui lòng thử lại!"
+      );
+    } finally {
+      setCancellingBookingId(null);
+    }
+  };
+
   if (loading) {
     return <p className="text-center mt-10">Đang tải dữ liệu đặt tour...</p>;
   }
@@ -97,7 +135,9 @@ const BookingHistoryPage = () => {
 
           // Kiểm tra booking đã quá ngày khởi hành chưa
           const isPastStartDate = dayjs().isAfter(dayjs(booking.startDate));
-          const isCancelled = isPastStartDate && !booking.paid;
+          const isCancelled =
+            booking.status === "cancelled" ||
+            (isPastStartDate && !booking.paid);
 
           return (
             <div
@@ -133,8 +173,12 @@ const BookingHistoryPage = () => {
 
                 <p className="text-sm text-gray-600 mt-1">
                   <strong>Trạng thái:</strong>{" "}
-                  {isCancelled ? (
-                    <span className="text-gray-500 font-medium">Đã hủy</span>
+                  {booking.status === "cancelled" ? (
+                    <span className="text-red-600 font-medium">Đã hủy</span>
+                  ) : isCancelled ? (
+                    <span className="text-gray-500 font-medium">
+                      Đã hủy (quá hạn)
+                    </span>
                   ) : booking.paid ? (
                     <span className="text-green-600 font-medium">
                       Đã thanh toán
@@ -146,8 +190,37 @@ const BookingHistoryPage = () => {
                   )}
                 </p>
 
+                {/* Thông báo hủy */}
+                {booking.status === "cancelled" && (
+                  <div className="mt-2 bg-red-50 border-l-4 border-red-400 p-3 rounded">
+                    <p className="text-sm text-red-700">
+                      ❌ Booking đã bị hủy
+                      {booking.cancelledAt &&
+                        ` vào ${dayjs(booking.cancelledAt).format("DD/MM/YYYY HH:mm")}`}
+                    </p>
+                    {booking.refundAmount > 0 && (
+                      <p className="text-sm text-red-700 mt-1">
+                        💰 Số tiền hoàn lại:{" "}
+                        {booking.refundAmount.toLocaleString()} đ
+                        {booking.refundStatus &&
+                          ` (${
+                            booking.refundStatus === "pending"
+                              ? "Đang chờ"
+                              : booking.refundStatus === "processing"
+                                ? "Đang xử lý"
+                                : booking.refundStatus === "completed"
+                                  ? "Đã hoàn"
+                                  : booking.refundStatus === "failed"
+                                    ? "Thất bại"
+                                    : ""
+                          })`}
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Thông báo hủy do quá hạn */}
-                {isCancelled && (
+                {isCancelled && booking.status !== "cancelled" && (
                   <div className="mt-2 bg-gray-100 border-l-4 border-gray-400 p-3 rounded">
                     <p className="text-sm text-gray-700">
                       ⚠️ Booking đã bị hủy do quá ngày khởi hành mà chưa thanh
@@ -161,40 +234,81 @@ const BookingHistoryPage = () => {
                   {dayjs(booking.createdAt).format("HH:mm DD/MM/YYYY")}
                 </p>
 
-                {/* Nút thanh toán cho booking chưa thanh toán và chưa quá ngày */}
-                {!booking.paid && !isCancelled && (
-                  <button
-                    className="mt-3 px-5 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                    onClick={() => handlePayment(booking)}
-                    disabled={paymentLoading === booking._id}
-                  >
-                    {paymentLoading === booking._id ? (
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="animate-spin h-4 w-4"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            fill="none"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          />
-                        </svg>
-                        Đang xử lý...
-                      </span>
-                    ) : (
-                      "Thanh toán ngay"
+                {/* Nút thanh toán và hủy booking */}
+                {!isCancelled && booking.status !== "cancelled" && (
+                  <div className="mt-3 flex gap-3">
+                    {/* Nút thanh toán cho booking chưa thanh toán */}
+                    {!booking.paid && (
+                      <button
+                        className="px-5 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                        onClick={() => handlePayment(booking)}
+                        disabled={paymentLoading === booking._id}
+                      >
+                        {paymentLoading === booking._id ? (
+                          <span className="flex items-center gap-2">
+                            <svg
+                              className="animate-spin h-4 w-4"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="none"
+                              />
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              />
+                            </svg>
+                            Đang xử lý...
+                          </span>
+                        ) : (
+                          "Thanh toán ngay"
+                        )}
+                      </button>
                     )}
-                  </button>
+
+                    {/* Nút hủy booking - chỉ hiển thị nếu tour chưa khởi hành */}
+                    {!isPastStartDate && (
+                      <button
+                        className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                        onClick={() => handleCancelBooking(booking._id)}
+                        disabled={cancellingBookingId === booking._id}
+                      >
+                        {cancellingBookingId === booking._id ? (
+                          <span className="flex items-center gap-2">
+                            <svg
+                              className="animate-spin h-4 w-4"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                                fill="none"
+                              />
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              />
+                            </svg>
+                            Đang hủy...
+                          </span>
+                        ) : (
+                          "Hủy booking"
+                        )}
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {booking.tour?.description && (
@@ -236,7 +350,9 @@ const BookingHistoryPage = () => {
                         <div className="flex gap-2">
                           <button
                             className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-                            onClick={() => handleReviewSubmit(booking.tour?._id)}
+                            onClick={() =>
+                              handleReviewSubmit(booking.tour?._id)
+                            }
                           >
                             Gửi đánh giá
                           </button>

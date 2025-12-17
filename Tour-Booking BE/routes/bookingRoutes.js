@@ -15,6 +15,7 @@ router.post("/", bookingController.createBooking);
 router.get("/my", bookingController.getMyBookings);
 router.post("/checkout-session", bookingController.getCheckoutSession);
 router.post("/momo-payment", bookingController.createMoMoPayment);
+router.patch("/:id/cancel", bookingController.cancelBooking);
 router.get(
   "/partner",
   authController.protect,

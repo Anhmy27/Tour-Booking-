@@ -39,6 +39,27 @@ const bookingSchema = new mongoose.Schema(
       enum: ["pending", "confirmed", "cancelled"],
       default: "pending",
     },
+    cancelledAt: {
+      type: Date,
+    },
+    refundStatus: {
+      type: String,
+      enum: ["none", "pending", "processing", "completed", "failed"],
+      default: "none",
+    },
+    refundAmount: {
+      type: Number,
+      default: 0,
+    },
+    refundDate: {
+      type: Date,
+    },
+    momoTransId: {
+      type: String,
+    },
+    momoRequestId: {
+      type: String,
+    },
   },
   {
     versionKey: false,
