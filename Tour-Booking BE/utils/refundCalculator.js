@@ -10,14 +10,10 @@ exports.calculateRefundAmount = (booking) => {
   let refundPercentage = 0;
 
   // Chính sách hoàn tiền theo số ngày trước khi tour bắt đầu
-  if (daysDiff >= 30) {
+  if (daysDiff >= 7) {
     refundPercentage = 100; // Hoàn 100%
-  } else if (daysDiff >= 15) {
-    refundPercentage = 75; // Hoàn 75%
-  } else if (daysDiff >= 7) {
-    refundPercentage = 50; // Hoàn 50%
   } else if (daysDiff >= 3) {
-    refundPercentage = 25; // Hoàn 25%
+    refundPercentage = 50; // Hoàn 50%
   } else {
     refundPercentage = 0; // Không hoàn tiền
   }

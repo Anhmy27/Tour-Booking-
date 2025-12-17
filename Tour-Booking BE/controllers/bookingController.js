@@ -260,8 +260,6 @@ exports.handleMoMoReturn = catchAsync(async (req, res, next) => {
   // Extract bookingId from orderId (format: bookingId_timestamp)
   const bookingId = orderId.split("_")[0];
 
-  const bookingId = orderId.split("_")[0];
-
   const booking = await Booking.findById(bookingId);
   if (!booking) {
     console.error("❌ Booking not found:", bookingId);
@@ -279,7 +277,6 @@ exports.handleMoMoReturn = catchAsync(async (req, res, next) => {
       status: "success",
       message: "Payment confirmed",
       data: { booking },
-      data: { booking },
     });
   } else {
     booking.paid = false;
@@ -288,7 +285,6 @@ exports.handleMoMoReturn = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: "failed",
-      message: "Payment failed",
       message: "Payment failed",
     });
   }
