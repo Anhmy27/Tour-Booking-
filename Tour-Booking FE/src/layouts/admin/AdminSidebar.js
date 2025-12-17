@@ -9,12 +9,14 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
+  TicketIcon,
 } from "@heroicons/react/24/outline";
 import { useAuthContext } from "../../contexts/AuthContext";
 
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: HomeIcon },
   { name: "Manage Users", href: "/admin/users", icon: UserGroupIcon },
+  { name: "Bookings", href: "/admin/bookings", icon: TicketIcon },
   { name: "Pending Tours", href: "/admin/pending-tours", icon: ClockIcon },
   { name: "Calendar", href: "/admin/calendar", icon: CalendarIcon },
   { name: "Chat", href: "/admin/chat", icon: ChatBubbleLeftIcon },

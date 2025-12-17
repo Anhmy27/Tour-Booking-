@@ -114,22 +114,8 @@ exports.createBooking = catchAsync(async (req, res, next) => {
 });
 
 exports.getMyBookings = catchAsync(async (req, res) => {
-  // Tự động hủy các booking chưa thanh toán và đã quá ngày khởi hành
-  const now = new Date();
-  await Booking.updateMany(
-    {
-      user: req.user.id,
-      paid: false,
-      startDate: { $lt: now },
-      status: { $ne: "cancelled" },
-    },
-    {
-      status: "cancelled",
-    }
-  );
-
   const bookings = await Booking.find({ user: req.user.id })
-    .populate("tour", "name imageCover startDates price duration")
+    .populate("tour", "name imageCover startDates price")
     .sort({ createdAt: -1 });
 
   res.status(200).json({
@@ -176,7 +162,7 @@ exports.getPartnerBookings = catchAsync(async (req, res) => {
 
 // MoMo Payment
 exports.createMoMoPayment = catchAsync(async (req, res, next) => {
-  const { tourId, numberOfPeople, startDate } = req.body;
+  const { tourId, numberOfPeople, startDate, bookingId } = req.body;
 
   if (!tourId || !numberOfPeople || !startDate) {
     return next(new AppError("Missing required fields", 400));
@@ -189,16 +175,31 @@ exports.createMoMoPayment = catchAsync(async (req, res, next) => {
 
   const totalAmount = tour.price * numberOfPeople;
 
-  // Check if there's already an unpaid booking for this tour, user, and date
-  let booking = await Booking.findOne({
-    tour: tourId,
-    user: req.user.id,
-    startDate: new Date(startDate),
-    paid: false,
-  });
+  let booking;
+  let isExistingBooking = false;
 
-  // If no unpaid booking exists, create a new one
-  if (!booking) {
+  // Nếu có bookingId, sử dụng booking đã tồn tại (thanh toán lại)
+  if (bookingId) {
+    booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return next(new AppError("Booking not found", 404));
+    }
+
+    // Kiểm tra booking thuộc về user hiện tại
+    if (booking.user.toString() !== req.user.id.toString()) {
+      return next(
+        new AppError("You do not have permission to pay for this booking", 403)
+      );
+    }
+
+    // Kiểm tra booking đã thanh toán chưa
+    if (booking.paid) {
+      return next(new AppError("This booking has already been paid", 400));
+    }
+
+    isExistingBooking = true;
+  } else {
+    // Tạo booking mới nếu không có bookingId
     booking = await Booking.create({
       tour: tourId,
       user: req.user.id,
@@ -230,9 +231,8 @@ exports.createMoMoPayment = catchAsync(async (req, res, next) => {
       },
     });
   } catch (error) {
-    // Only delete if this was a newly created booking (not an existing unpaid one)
-    const existingBooking = await Booking.findById(booking._id);
-    if (existingBooking && !existingBooking.paid) {
+    // Chỉ xóa booking nếu là booking mới tạo
+    if (!isExistingBooking) {
       await Booking.findByIdAndDelete(booking._id);
     }
     return next(new AppError(`MoMo payment failed: ${error.message}`, 500));
@@ -260,6 +260,8 @@ exports.handleMoMoReturn = catchAsync(async (req, res, next) => {
   // Extract bookingId from orderId (format: bookingId_timestamp)
   const bookingId = orderId.split("_")[0];
 
+  const bookingId = orderId.split("_")[0];
+
   const booking = await Booking.findById(bookingId);
   if (!booking) {
     console.error("❌ Booking not found:", bookingId);
@@ -277,6 +279,7 @@ exports.handleMoMoReturn = catchAsync(async (req, res, next) => {
       status: "success",
       message: "Payment confirmed",
       data: { booking },
+      data: { booking },
     });
   } else {
     booking.paid = false;
@@ -285,6 +288,7 @@ exports.handleMoMoReturn = catchAsync(async (req, res, next) => {
 
     res.status(200).json({
       status: "failed",
+      message: "Payment failed",
       message: "Payment failed",
     });
   }
