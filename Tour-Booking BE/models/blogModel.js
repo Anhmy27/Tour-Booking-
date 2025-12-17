@@ -27,7 +27,6 @@ const blogSchema = new mongoose.Schema(
       enum: ["du-lich", "am-thuc", "khach-san", "trai-nghiem", "meo-hay", "khac"],
       default: "khac",
     },
-    tags: [String],
     author: {
       type: mongoose.Schema.ObjectId,
       ref: "User",
@@ -37,10 +36,6 @@ const blogSchema = new mongoose.Schema(
       type: String,
       enum: ["draft", "published"],
       default: "published",
-    },
-    linkedTour: {
-      type: mongoose.Schema.ObjectId,
-      ref: "Tour",
     },
     publishedAt: Date,
   },

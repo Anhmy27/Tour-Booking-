@@ -2,14 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { blogService } from "../../services/blogApi";
 import MDEditor from "@uiw/react-md-editor";
-import BlogFormModal from "./BlogFormModal";
 
 const BlogDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [blog, setBlog] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     fetchBlog();
@@ -48,11 +46,6 @@ const BlogDetail = () => {
       month: "long",
       day: "numeric",
     });
-  };
-
-  const handleEditSuccess = () => {
-    setShowEditModal(false);
-    fetchBlog(); // Reload blog data
   };
 
   if (loading) {
@@ -95,14 +88,6 @@ const BlogDetail = () => {
             </svg>
             Quay lại
           </button>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowEditModal(true)}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors"
-            >
-              Chỉnh sửa
-            </button>
-          </div>
         </div>
       </div>
 
@@ -158,29 +143,9 @@ const BlogDetail = () => {
                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
               />
             </svg>
-            {formatDate(blog.publishedAt || blog.createdAt)}
+            {formatDate(blog.publishedAt)}
           </span>
-          <span className="flex items-center gap-2">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-              />
-            </svg>
-          </span>
+          
         </div>
 
         {/* Cover Image */}
@@ -192,69 +157,11 @@ const BlogDetail = () => {
           />
         </div>
 
-        {/* Tags */}
-        {blog.tags && blog.tags.length > 0 && (
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
-              {blog.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Content */}
         <div className="mb-8" data-color-mode="light">
           <MDEditor.Markdown source={blog.content} />
         </div>
-
-        {/* Linked Tour */}
-        {blog.linkedTour && (
-          <div className="mt-8 p-6 bg-blue-50 border-l-4 border-blue-600 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Tour liên quan
-            </h3>
-            <p className="text-gray-700">{blog.linkedTour.name}</p>
-            <button
-              onClick={() => navigate(`/tours/${blog.linkedTour._id}`)}
-              className="mt-3 text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Xem chi tiết tour →
-            </button>
-          </div>
-        )}
-
-        {/* Author Info */}
-        {blog.author && (
-          <div className="mt-8 pt-6 border-t">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                {blog.author.name?.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Tác giả</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {blog.author.name}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </article>
-
-      {/* Edit Modal */}
-      {showEditModal && (
-        <BlogFormModal
-          blog={blog}
-          onClose={() => setShowEditModal(false)}
-          onSuccess={handleEditSuccess}
-        />
-      )}
     </div>
   );
 };
