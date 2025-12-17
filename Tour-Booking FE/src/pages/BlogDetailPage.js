@@ -145,43 +145,10 @@ const BlogDetailPage = () => {
           />
         </div>
 
-        {/* Tags */}
-        {blog.tags && blog.tags.length > 0 && (
-          <div className="mb-6">
-            <div className="flex flex-wrap gap-2">
-              {blog.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Content */}
         <div className="mb-8" data-color-mode="light">
           <MDEditor.Markdown source={blog.content} style={{ fontSize: "18px" }} />
         </div>
-
-        {/* Author Info */}
-        {blog.author && (
-          <div className="mt-8 pt-6 border-t">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                {blog.author.name?.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Tác giả</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {blog.author.name}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
       </article>
     </div>
   );

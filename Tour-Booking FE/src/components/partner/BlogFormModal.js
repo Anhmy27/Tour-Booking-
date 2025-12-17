@@ -6,12 +6,10 @@ import axios from "axios";
 const BlogFormModal = ({ blog, onClose, onSuccess }) => {
   const isEdit = Boolean(blog);
   const [loading, setLoading] = useState(false);
-  const [uploadingImage, setUploadingImage] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     content: "",
     category: "du-lich",
-    tags: "",
     status: "published",
   });
   const [coverImage, setCoverImage] = useState(null);
@@ -32,7 +30,6 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
         title: blog.title,
         content: blog.content,
         category: blog.category,
-        tags: blog.tags.join(", "),
         status: blog.status,
       });
       setPreviewImage(blog.coverImage);
@@ -60,47 +57,6 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
     }
   };
 
-  // Upload ảnh vào nội dung blog
-  const handleContentImageUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Kích thước ảnh không được vượt quá 5MB!");
-      return;
-    }
-
-    try {
-      setUploadingImage(true);
-      const data = new FormData();
-      data.append("image", file);
-
-      // Upload lên Cloudinary qua backend
-      const response = await axios.post(
-        `${process.env.REACT_APP_BACKEND_URL}blogs/upload-image`,
-        data,
-        {
-          headers: { "Content-Type": "multipart/form-data" },
-          withCredentials: true,
-        }
-      );
-
-      const imageUrl = response.data.data.imageUrl;
-      
-      // Chèn ảnh vào markdown với cú pháp: ![alt text](url)
-      const imageMarkdown = `\n![Ảnh minh họa](${imageUrl})\n`;
-      const newContent = formData.content + imageMarkdown;
-      setFormData((prev) => ({ ...prev, content: newContent }));
-      
-      alert("Upload ảnh thành công!");
-    } catch (error) {
-      console.error("Lỗi upload ảnh:", error);
-      alert("Không thể upload ảnh. Vui lòng thử lại!");
-    } finally {
-      setUploadingImage(false);
-    }
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -124,14 +80,6 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
       data.append("content", formData.content);
       data.append("category", formData.category);
       data.append("status", formData.status);
-
-      if (formData.tags.trim()) {
-        const tagsArray = formData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag);
-        tagsArray.forEach((tag) => data.append("tags[]", tag));
-      }
 
       if (coverImage) {
         data.append("coverImage", coverImage);
@@ -251,52 +199,12 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
             </div>
           </div>
 
-          {/* Tags */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tags
-              <span className="text-gray-500 text-xs ml-2">
-                (Phân cách bằng dấu phẩy)
-              </span>
-            </label>
-            <input
-              type="text"
-              name="tags"
-              value={formData.tags}
-              onChange={handleInputChange}
-              placeholder="Ví dụ: du lịch, khám phá, Việt Nam"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
           {/* Content */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Nội dung <span className="text-red-500">*</span>
             </label>
             
-            {/* Upload ảnh vào nội dung */}
-            <div className="mb-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                <span className="text-blue-700 font-medium">
-                  {uploadingImage ? "Đang upload..." : "Thêm ảnh vào nội dung"}
-                </span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleContentImageUpload}
-                  className="hidden"
-                  disabled={uploadingImage}
-                />
-              </label>
-              <p className="text-xs text-blue-600 mt-1 ml-7">
-                Ảnh sẽ được chèn vào cuối nội dung. Bạn có thể di chuyển nó đến vị trí mong muốn.
-              </p>
-            </div>
-
             <div data-color-mode="light">
               <MDEditor
                 value={formData.content}

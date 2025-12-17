@@ -128,9 +128,6 @@ exports.logout = (req, res) => {
   // Xóa cookie bằng cách clearCookie
   res.clearCookie("jwt", {
     httpOnly: true,
-    secure: req.secure || req.headers["x-forwarded-proto"] === "https",
-    sameSite: "Lax",
-    path: "/",
   });
   res.status(200).json({ status: "success" });
 };

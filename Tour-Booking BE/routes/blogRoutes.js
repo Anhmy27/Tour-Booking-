@@ -45,9 +45,6 @@ router.get("/public/:slug", blogController.getPublicBlog);
 router.use(authController.protect);
 router.use(authController.restrictTo("partner", "admin"));
 
-// Upload ảnh vào nội dung blog
-router.post("/upload-image", upload.single("image"), resizeBlogImage, blogController.uploadImage);
-
 // CRUD routes
 router
   .route("/")
