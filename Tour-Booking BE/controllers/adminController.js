@@ -237,6 +237,6 @@ module.exports = {
   createPartnerAccount,
   approveTour,
   getPendingTours,
-  banUser,
+  toggleUserStatus,
   getAllBookings,
 };

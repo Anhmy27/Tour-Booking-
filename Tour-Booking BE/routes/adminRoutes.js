@@ -4,7 +4,7 @@ const {
   createPartnerAccount,
   approveTour,
   getPendingTours,
-  banUser,
+  toggleUserStatus,
   getAllBookings,
 } = require("./../controllers/adminController");
 const {
