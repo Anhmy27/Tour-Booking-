@@ -2,15 +2,36 @@ import { useState, useEffect } from "react";
 import { FaClock, FaUsers, FaMapMarkerAlt } from "react-icons/fa";
 import dayjs from "dayjs";
 import ResponsiveDatePickers from "../tour-detail/ResponsiveDatePickers";
-import { getBookingSession, createMoMoPayment } from "../../services/api";
+import { getBookingSession, createMoMoPayment, getAvailableSlots } from "../../services/api";
 
 const TourInfo = ({ tour, onSelectLocation }) => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [numAdults, setNumAdults] = useState(2);
   const [isLoading, setIsLoading] = useState(false);
+  const [availability, setAvailability] = useState(null);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
 
   const totalPrice = numAdults * (tour?.price || 0);
-  useEffect(() => {}, [tour]);
+
+  // Gọi API để lấy số chỗ còn trống khi chọn ngày
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      if (!selectedDate || !tour?.id) return;
+      
+      setLoadingAvailability(true);
+      try {
+        const response = await getAvailableSlots(tour.id, selectedDate);
+        setAvailability(response.data.data);
+      } catch (error) {
+        console.error("Error fetching availability:", error);
+        setAvailability(null);
+      } finally {
+        setLoadingAvailability(false);
+      }
+    };
+
+    fetchAvailability();
+  }, [selectedDate, tour?.id]);
   const handleScrollToMap = (location) => {
     const mapElement = document.getElementById("tour-map");
     if (mapElement) {
@@ -73,6 +94,18 @@ const TourInfo = ({ tour, onSelectLocation }) => {
     } else if (!isValidDate) {
       alert("Ngày khởi hành không hợp lệ.");
       return;
+    }
+    
+    // Kiểm tra số chỗ còn trống
+    if (availability) {
+      if (availability.remainingSlots === 0) {
+        alert("Ngày này đã hết chỗ. Vui lòng chọn ngày khác.");
+        return;
+      }
+      if (numAdults > availability.remainingSlots) {
+        alert(`Chỉ còn ${availability.remainingSlots} chỗ trống. Vui lòng giảm số lượng khách.`);
+        return;
+      }
     }
     
     // Gọi MoMo payment luôn không cần modal xác nhận
@@ -139,15 +172,37 @@ const TourInfo = ({ tour, onSelectLocation }) => {
             <li className="flex items-start gap-3">
               <FaClock className="text-cyan-500 mt-1" size={20} />
               <span>
-                <strong>Thời gian:</strong> {tour.duration}
+                <strong>Thời gian:</strong> {tour.duration} ngày 
               </span>
             </li>
-            <li className="flex items-start gap-3">
-              <FaUsers className="text-cyan-500 mt-1" size={20} />
-              <span>
-                <strong>Số lượng tối đa:</strong> {tour.maxGroupSize} người
-              </span>
-            </li>
+            
+            {/* Hiển thị thông tin booking khi đã chọn ngày */}
+            {selectedDate && availability && (
+              <li className="flex flex-col gap-2 p-4 bg-cyan-50 rounded-lg border-2 border-cyan-200">
+                <div className="flex items-center gap-2 mb-1">
+                  <FaUsers className="text-cyan-600" size={18} />
+                  <span className="font-semibold text-cyan-800">
+                    Tình trạng ngày {dayjs(selectedDate).format("DD/MM/YYYY")}:
+                  </span>
+                </div>
+                {loadingAvailability ? (
+                  <p className="text-sm text-gray-500 ml-7">Đang tải...</p>
+                ) : (
+                  <div className="ml-7">
+                    {availability.remainingSlots === 0 ? (
+                      <p className="text-red-600 font-bold">
+                         Tour đã đủ người
+                      </p>
+                    ) : (
+                      <p className="text-green-600 font-semibold">
+                         Có thể đặt tour
+                      </p>
+                    )}
+                  </div>
+                )}
+              </li>
+            )}
+            
             <li className="flex items-start gap-3">
               <span>{tour.description}</span>
             </li>
@@ -175,7 +230,7 @@ const TourInfo = ({ tour, onSelectLocation }) => {
                   className={`px-3 py-1 rounded ${
                     numAdults <= 1
                       ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-gray-200"
+                      : "bg-gray-200 hover:bg-gray-300"
                   }`}
                   onClick={() => {
                     if (numAdults > 1) setNumAdults(numAdults - 1);
@@ -187,23 +242,28 @@ const TourInfo = ({ tour, onSelectLocation }) => {
                 <span className="w-6 text-center">{numAdults}</span>
                 <button
                   className={`px-3 py-1 rounded ${
-                    numAdults >= tour?.maxGroupSize
+                    numAdults >= (availability?.remainingSlots || tour?.maxGroupSize)
                       ? "bg-gray-300 cursor-not-allowed"
-                      : "bg-gray-200"
+                      : "bg-gray-200 hover:bg-gray-300"
                   }`}
                   onClick={() => {
-                    if (numAdults < tour?.maxGroupSize)
+                    const maxAllowed = availability 
+                      ? availability.remainingSlots 
+                      : tour?.maxGroupSize;
+                    if (numAdults < maxAllowed) {
                       setNumAdults(numAdults + 1);
+                    }
                   }}
-                  disabled={numAdults >= tour?.maxGroupSize}
+                  disabled={numAdults >= (availability?.remainingSlots || tour?.maxGroupSize)}
                 >
                   +
                 </button>
               </div>
             </div>
-            {numAdults === tour?.maxGroupSize && (
-              <p className="text-sm text-red-500 mt-2">
-                Đã đạt số lượng tối đa: {tour.maxGroupSize} người
+            
+            {!selectedDate && (
+              <p className="text-sm text-gray-500 mt-2">
+                Vui lòng chọn ngày khởi hành để xem tình trạng tour
               </p>
             )}
             {/* Tổng giá */}

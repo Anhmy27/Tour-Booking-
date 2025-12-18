@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 const ResetPasswordForm = () => {
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
 
-  const [searchParams] = useSearchParams();
-
-  const token = searchParams.get("token");
-  const email = searchParams.get("email");
+  const location = useLocation();
+  const { token, email } = location.state || {};
 
   const { resetPassword, isLoading, error, user } = useAuth();
   const navigate = useNavigate();

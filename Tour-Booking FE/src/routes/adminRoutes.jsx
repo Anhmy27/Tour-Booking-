@@ -9,6 +9,7 @@ const ActiveTourDetailPage = lazy(() => import("../pages/admin/ActiveTourDetailP
 const AllBlogsPage = lazy(() => import("../pages/admin/AllBlogsPage"));
 const BlogDetailAdminPage = lazy(() => import("../pages/admin/BlogDetailAdminPage"));
 
+const Bookings = lazy(() => import("../pages/admin/Bookings"));
 const adminRoutes = {
   path: "/admin",
   element: <AdminLayout />,
@@ -29,6 +30,7 @@ const adminRoutes = {
       path: "blogs/:id",
       element: <BlogDetailAdminPage />,
     }
+    { path: "bookings", element: <Bookings /> },
   ],
 };
 

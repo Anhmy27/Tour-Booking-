@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { blogService } from "../../services/blogApi";
 import MDEditor from "@uiw/react-md-editor";
+import axios from "axios";
 
 const BlogFormModal = ({ blog, onClose, onSuccess }) => {
   const isEdit = Boolean(blog);
@@ -9,7 +10,6 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
     title: "",
     content: "",
     category: "du-lich",
-    tags: "",
     status: "published",
   });
   const [coverImage, setCoverImage] = useState(null);
@@ -30,7 +30,6 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
         title: blog.title,
         content: blog.content,
         category: blog.category,
-        tags: blog.tags.join(", "),
         status: blog.status,
       });
       setPreviewImage(blog.coverImage);
@@ -81,14 +80,6 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
       data.append("content", formData.content);
       data.append("category", formData.category);
       data.append("status", formData.status);
-
-      if (formData.tags.trim()) {
-        const tagsArray = formData.tags
-          .split(",")
-          .map((tag) => tag.trim())
-          .filter((tag) => tag);
-        tagsArray.forEach((tag) => data.append("tags[]", tag));
-      }
 
       if (coverImage) {
         data.append("coverImage", coverImage);
@@ -208,29 +199,12 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
             </div>
           </div>
 
-          {/* Tags */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Tags
-              <span className="text-gray-500 text-xs ml-2">
-                (Phân cách bằng dấu phẩy)
-              </span>
-            </label>
-            <input
-              type="text"
-              name="tags"
-              value={formData.tags}
-              onChange={handleInputChange}
-              placeholder="Ví dụ: du lịch, khám phá, Việt Nam"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-
           {/* Content */}
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Nội dung <span className="text-red-500">*</span>
             </label>
+            
             <div data-color-mode="light">
               <MDEditor
                 value={formData.content}
@@ -238,6 +212,19 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
                 height={400}
                 preview="edit"
               />
+            </div>
+            
+            {/* Hướng dẫn Markdown */}
+            <div className="mt-2 p-3 bg-gray-50 rounded text-xs text-gray-600">
+              <strong>Hướng dẫn Markdown:</strong>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                <div>• <code># Tiêu đề lớn</code></div>
+                <div>• <code>## Tiêu đề nhỏ</code></div>
+                <div>• <code>**Chữ đậm**</code></div>
+                <div>• <code>*Chữ nghiêng*</code></div>
+                <div>• <code>[Link](url)</code></div>
+                <div>• <code>![Ảnh](url)</code></div>
+              </div>
             </div>
           </div>
 

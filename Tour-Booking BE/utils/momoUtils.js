@@ -104,6 +104,71 @@ class MoMoUtils {
 
     return calculatedSignature === signature;
   }
+
+  async processRefund(booking, refundAmount) {
+    try {
+      if (!booking.momoTransId) {
+        throw new Error("Không tìm thấy thông tin giao dịch MoMo");
+      }
+
+      const orderId = booking._id.toString();
+      const requestId = `REFUND_${orderId}_${Date.now()}`;
+      const description = `Hoàn tiền đặt tour - Booking ID: ${orderId}`;
+
+      const rawSignature = `accessKey=${this.accessKey}&amount=${refundAmount}&description=${description}&orderId=${orderId}&partnerCode=${this.partnerCode}&requestId=${requestId}&transId=${booking.momoTransId}`;
+
+      const signature = this.createSignature(rawSignature);
+
+      const requestBody = {
+        partnerCode: this.partnerCode,
+        accessKey: this.accessKey,
+        requestId: requestId,
+        amount: refundAmount,
+        orderId: orderId,
+        transId: booking.momoTransId,
+        description: description,
+        signature: signature,
+        lang: "vi",
+      };
+
+      console.log("=== MOMO REFUND REQUEST ===");
+      console.log(JSON.stringify(requestBody, null, 2));
+
+      const refundEndpoint =
+        process.env.MOMO_REFUND_ENDPOINT ||
+        "https://test-payment.momo.vn/v2/gateway/api/refund";
+
+      const response = await axios.post(refundEndpoint, requestBody, {
+        headers: { "Content-Type": "application/json" },
+        httpsAgent: new https.Agent({ rejectUnauthorized: false }),
+        timeout: 30000,
+      });
+
+      console.log("=== MOMO REFUND RESPONSE ===");
+      console.log(response.data);
+
+      if (response.data.resultCode === 0) {
+        return {
+          success: true,
+          transId: response.data.transId,
+          message: response.data.message,
+        };
+      } else {
+        return {
+          success: false,
+          error: response.data.message || "Hoàn tiền thất bại",
+          resultCode: response.data.resultCode,
+        };
+      }
+    } catch (error) {
+      console.error("=== MOMO REFUND ERROR ===");
+      console.error(error.response?.data || error.message);
+      return {
+        success: false,
+        error: error.message || "Lỗi kết nối với MoMo",
+      };
+    }
+  }
 }
 
 module.exports = new MoMoUtils();

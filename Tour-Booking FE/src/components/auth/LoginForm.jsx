@@ -26,16 +26,14 @@ const LoginForm = () => {
 
   const handleGoogleLogin = () => {
     setGoogleError(""); // Clear error trước khi login
-    const backendUrl = process.env.REACT_APP_BACKEND_URL || "http://localhost:9999/api/v1/";
+    const backendUrl =
+      process.env.REACT_APP_BACKEND_URL || "http://localhost:9999/api/v1/";
     window.location.href = `${backendUrl}auth/google`;
   };
 
   useEffect(() => {
     if (user) {
-      if (!user.active) {
-        navigate("/confirm-email");
-        return;
-      }
+      // Đã bỏ kiểm tra user.active
       switch (user.role?.trim().toLowerCase()) {
         case "admin":
           navigate("/admin/dashboard");
@@ -98,7 +96,9 @@ const LoginForm = () => {
           </div>
 
           {error && <div className="text-red-500 text-sm">{error}</div>}
-          {googleError && <div className="text-red-500 text-sm">{googleError}</div>}
+          {googleError && (
+            <div className="text-red-500 text-sm">{googleError}</div>
+          )}
 
           <button
             className="w-full bg-teal-400 text-white py-3 rounded-full font-bold disabled:opacity-70"

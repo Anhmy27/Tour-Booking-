@@ -27,7 +27,6 @@ const blogSchema = new mongoose.Schema(
       enum: ["du-lich", "am-thuc", "khach-san", "trai-nghiem", "meo-hay", "khac"],
       default: "khac",
     },
-    tags: [String],
     author: {
       type: mongoose.Schema.ObjectId,
       ref: "User",
@@ -38,20 +37,6 @@ const blogSchema = new mongoose.Schema(
       enum: ["draft", "published"],
       default: "published",
     },
-    linkedTour: {
-      type: mongoose.Schema.ObjectId,
-      ref: "Tour",
-    },
-    views: {
-      type: Number,
-      default: 0,
-    },
-    likes: [
-      {
-        type: mongoose.Schema.ObjectId,
-        ref: "User",
-      },
-    ],
     publishedAt: Date,
   },
   {
@@ -83,11 +68,6 @@ blogSchema.pre("save", function (next) {
   }
   
   next();
-});
-
-// Virtual populate comments (nếu có)
-blogSchema.virtual("likesCount").get(function () {
-  return this.likes ? this.likes.length : 0;
 });
 
 const Blog = mongoose.model("Blog", blogSchema);

@@ -14,15 +14,14 @@ exports.getPublicBlogs = catchAsync(async (req, res, next) => {
     filter.$text = { $search: search };
   }
   
-  let query = Blog.find(filter).populate("author", "name email");
+  let query = Blog.find(filter);
   
   // Sort
   if (sort === "newest") query = query.sort("-createdAt");
   else if (sort === "oldest") query = query.sort("createdAt");
-  else if (sort === "popular") query = query.sort("-views");
   else query = query.sort("-createdAt");
   
-  const blogs = await query.populate("linkedTour", "name slug");
+  const blogs = await query;
   
   res.status(200).json({
     status: "success",
@@ -36,9 +35,7 @@ exports.getPublicBlog = catchAsync(async (req, res, next) => {
   const blog = await Blog.findOne({ 
     slug: req.params.slug,
     status: "published"
-  })
-    .populate("author", "name email")
-    .populate("linkedTour", "name slug");
+  });
   
   if (!blog) {
     return next(new AppError("Không tìm thấy blog", 404));
@@ -62,15 +59,7 @@ exports.getMyBlogs = catchAsync(async (req, res, next) => {
     filter.$text = { $search: search };
   }
   
-  let query = Blog.find(filter);
-  
-  // Sort
-  if (sort === "newest") query = query.sort("-createdAt");
-  else if (sort === "oldest") query = query.sort("createdAt");
-  else if (sort === "popular") query = query.sort("-views");
-  else query = query.sort("-createdAt");
-  
-  const blogs = await query.populate("linkedTour", "name slug");
+  const blogs = await Blog.find(filter).sort("-createdAt");
   
   res.status(200).json({
     status: "success",
@@ -81,15 +70,15 @@ exports.getMyBlogs = catchAsync(async (req, res, next) => {
 
 // Lấy 1 blog để edit
 exports.getBlog = catchAsync(async (req, res, next) => {
-  const blog = await Blog.findById(req.params.id).populate("linkedTour", "name slug");
+  const blog = await Blog.findById(req.params.id);
   
   if (!blog) {
     return next(new AppError("Không tìm thấy blog", 404));
   }
   
   // Kiểm tra quyền
-  if (blog.author.toString() !== req.user.id && req.user.role !== "admin") {
-    return next(new AppError("Bạn không có quyền xem blog này", 403));
+  if (blog.author.toString() !== req.user.id) {
+    return next(new AppError("Bạn không có quyền chỉnh sửa blog này", 403));
   }
   
   res.status(200).json({
@@ -104,9 +93,7 @@ exports.createBlog = catchAsync(async (req, res, next) => {
     title: req.body.title,
     content: req.body.content,
     category: req.body.category,
-    tags: req.body.tags,
     status: req.body.status || "published",
-    linkedTour: req.body.linkedTour,
     author: req.user.id,
   };
   
@@ -136,12 +123,12 @@ exports.updateBlog = catchAsync(async (req, res, next) => {
     return next(new AppError("Không tìm thấy blog", 404));
   }
   
-  // Kiểm tra quyền
-  if (blog.author.toString() !== req.user.id && req.user.role !== "admin") {
+  // Chỉ cho phép partner (chủ blog) chỉnh sửa blog của mình
+  if (blog.author.toString() !== req.user.id) {
     return next(new AppError("Bạn không có quyền chỉnh sửa blog này", 403));
   }
   
-  const allowedFields = ["title", "content", "category", "tags", "status", "linkedTour"];
+  const allowedFields = ["title", "content", "category", "status"];
   const updates = {};
   
   allowedFields.forEach((field) => {
@@ -179,8 +166,8 @@ exports.deleteBlog = catchAsync(async (req, res, next) => {
     return next(new AppError("Không tìm thấy blog", 404));
   }
   
-  // Kiểm tra quyền
-  if (blog.author.toString() !== req.user.id && req.user.role !== "admin") {
+  // Chỉ cho phép partner (chủ blog) xóa blog của mình
+  if (blog.author.toString() !== req.user.id) {
     return next(new AppError("Bạn không có quyền xóa blog này", 403));
   }
   
@@ -189,49 +176,5 @@ exports.deleteBlog = catchAsync(async (req, res, next) => {
   res.status(204).json({
     status: "success",
     data: null,
-  });
-});
-
-// Tăng view count (public)
-exports.incrementView = catchAsync(async (req, res, next) => {
-  const blog = await Blog.findByIdAndUpdate(
-    req.params.id,
-    { $inc: { views: 1 } },
-    { new: true }
-  );
-  
-  if (!blog) {
-    return next(new AppError("Không tìm thấy blog", 404));
-  }
-  
-  res.status(200).json({
-    status: "success",
-    data: { blog },
-  });
-});
-
-// Toggle like (public)
-exports.toggleLike = catchAsync(async (req, res, next) => {
-  const blog = await Blog.findById(req.params.id);
-  
-  if (!blog) {
-    return next(new AppError("Không tìm thấy blog", 404));
-  }
-  
-  const userIndex = blog.likes.indexOf(req.user.id);
-  
-  if (userIndex > -1) {
-    // Unlike
-    blog.likes.splice(userIndex, 1);
-  } else {
-    // Like
-    blog.likes.push(req.user.id);
-  }
-  
-  await blog.save();
-  
-  res.status(200).json({
-    status: "success",
-    data: { blog },
   });
 });

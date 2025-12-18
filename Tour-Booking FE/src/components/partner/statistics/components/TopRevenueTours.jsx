@@ -12,7 +12,11 @@ const TopRevenueTours = () => {
     setLoading(true);
     try {
       const res = await axios.get(
+<<<<<<< HEAD
         `${process.env.REACT_APP_BACKEND_URL}reports/top-revenue-tours`,
+=======
+        `${process.env.REACT_APP_BACKEND_URL.replace('/api/v1/', '')}reports/top-revenue-tours`,
+>>>>>>> d5f8cd1d49a32ffc5cb33cf4d930953e0a596b25
         {
           params: { month, year },
           withCredentials: true,

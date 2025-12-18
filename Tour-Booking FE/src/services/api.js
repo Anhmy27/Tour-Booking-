@@ -7,11 +7,11 @@ axios.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       const errorMessage = error.response.data?.message || "";
       const currentPath = window.location.pathname;
-      
+
       // Chỉ redirect nếu KHÔNG phải đang ở trang login/signup
       if (
         (errorMessage.includes("Token expired") ||
-        errorMessage.includes("Invalid token")) &&
+          errorMessage.includes("Invalid token")) &&
         currentPath !== "/login" &&
         currentPath !== "/signup" &&
         currentPath !== "/forgot-password" &&
@@ -59,15 +59,7 @@ export const authService = {
       withCredentials: true,
     }),
 
-  confirmEmail: (pin) =>
-    axios.get(`${process.env.REACT_APP_BACKEND_URL}auth/confirmEmail/${pin}`, {
-      withCredentials: true,
-    }),
-
-  resendConfirmEmail: () =>
-    axios.get(`${process.env.REACT_APP_BACKEND_URL}auth/resendConfirmEmail`, {
-      withCredentials: true,
-    }),
+  // Đã bỏ confirmEmail và resendConfirmEmail
 
   forgotPassword: (email) =>
     axios.post(`${process.env.REACT_APP_BACKEND_URL}auth/forgotPassword`, {
@@ -126,6 +118,13 @@ export function getTourBySlug(slug) {
   return axios.get(`${process.env.REACT_APP_BACKEND_URL}tours/detail/${slug}`);
 }
 
+export function getAvailableSlots(tourId, startDate) {
+  return axios.post(
+    `${process.env.REACT_APP_BACKEND_URL}tours/${tourId}/remaining-slots`,
+    { startDate }
+  );
+}
+
 export function getBookingSession(tourId, numberOfPeople, startDate) {
   return axios.post(
     `${process.env.REACT_APP_BACKEND_URL}bookings/checkout-session`,
@@ -154,6 +153,16 @@ export function updateMoMoPaymentStatus(momoParams) {
   return axios.post(
     `${process.env.REACT_APP_BACKEND_URL}bookings/momo-return`,
     momoParams,
+    {
+      withCredentials: true,
+    }
+  );
+}
+
+export function cancelBooking(bookingId) {
+  return axios.patch(
+    `${process.env.REACT_APP_BACKEND_URL}bookings/${bookingId}/cancel`,
+    {},
     {
       withCredentials: true,
     }

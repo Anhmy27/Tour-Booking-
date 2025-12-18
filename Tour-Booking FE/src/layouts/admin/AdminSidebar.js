@@ -9,15 +9,23 @@ import {
   ChartBarIcon,
   Cog6ToothIcon,
   ArrowRightOnRectangleIcon,
+<<<<<<< HEAD
   CheckCircleIcon,
   DocumentTextIcon,
+=======
+  TicketIcon,
+>>>>>>> d5f8cd1d49a32ffc5cb33cf4d930953e0a596b25
 } from "@heroicons/react/24/outline";
 import { useAuthContext } from "../../contexts/AuthContext";
 
 const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: HomeIcon },
   { name: "Manage Users", href: "/admin/users", icon: UserGroupIcon },
+<<<<<<< HEAD
   { name: "Active Tours", href: "/admin/active-tours", icon: CheckCircleIcon },
+=======
+  { name: "Bookings", href: "/admin/bookings", icon: TicketIcon },
+>>>>>>> d5f8cd1d49a32ffc5cb33cf4d930953e0a596b25
   { name: "Pending Tours", href: "/admin/pending-tours", icon: ClockIcon },
   { name: "Blogs", href: "/admin/blogs", icon: DocumentTextIcon },
   { name: "Calendar", href: "/admin/calendar", icon: CalendarIcon },

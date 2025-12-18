@@ -59,21 +59,21 @@ const TourDetailPage = () => {
 
   return (
     <div className="bg-white text-black py-4 px-12">
-      <TourHeader tour={tour || TOUR_SAMPLE} />
+      <TourHeader tour={tour} />
 
-      <TourBanner images={tour?.images || TOUR_SAMPLE.images} />
+      <TourBanner images={tour?.images} />
 
       <TourInfo
-        tour={tour || TOUR_SAMPLE}
+        tour={tour}
         onSelectLocation={(location) => setSelectedLocation(location)}
       />
 
       <MapLocation
-        locations={tour?.locations || TOUR_SAMPLE.locations}
+        locations={tour?.locations }
         startLocation={tour?.startLocation}
         selectedLocation={selectedLocation}
       />
-      <TourReviews tourId={tour?._id} />
+      {tour && <TourReviews tourId={tour.id} />}
     </div>
   );
 };

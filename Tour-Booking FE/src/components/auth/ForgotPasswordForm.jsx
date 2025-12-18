@@ -12,15 +12,18 @@ const ForgotPasswordForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSuccess(false);
-    if (await forgotPassword(email)) setIsSuccess(true);
+    const result = await forgotPassword(email);
+    if (result && result.success) {
+      // Chuyển hướng sang trang reset password với token và email (ẩn trong state)
+      navigate('/reset-password', {
+        state: { token: result.token, email: result.email }
+      });
+    }
   };
 
   useEffect(() => {
     if (user) {
-      if (!user.active) {
-        navigate("/confirm-email");
-        return;
-      }
+      // Đã bỏ kiểm tra user.active
       switch (user.role?.trim().toLowerCase()) {
         case "admin":
           navigate("/admin");
@@ -64,17 +67,10 @@ const ForgotPasswordForm = () => {
             />
           </div>
           <div>
-            Chúng tôi sẽ gửi mã xác minh tới email này nếu nó khớp với tài khoản
-            Fvivu hiện có.
+            Nhập email của bạn để đặt lại mật khẩu.
           </div>
 
           {error && <div className="text-red-500 text-sm">{error}</div>}
-          {isSuccess && (
-            <div className="text-green-500 text-sm">
-              Email đặt lại mật khẩu đã được gửi! Hãy kiểm tra hộp thư đến (hoặc
-              thư rác) của bạn.
-            </div>
-          )}
 
           <button
             className="w-full bg-teal-400 text-white py-3 rounded-full font-bold disabled:opacity-70"

@@ -54,19 +54,7 @@ router
     authController.updateProfile
   );
 
-router.get(
-  "/confirmEmail/:pin",
-  authController.bypassInactiveProtect,
-  authController.protect,
-  authController.confirmEmail
-);
-
-router.get(
-  "/resendConfirmEmail",
-  authController.bypassInactiveProtect,
-  authController.protect,
-  authController.resendConfirmEmail
-);
+// Đã bỏ routes confirmEmail và resendConfirmEmail
 
 router.post("/forgotPassword", authController.forgotPassword);
 

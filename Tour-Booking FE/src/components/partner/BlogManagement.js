@@ -3,11 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { blogService } from "../../services/blogApi";
 import BlogFormModal from "./BlogFormModal";
 import Sidebar from "../../layouts/partner/Sidebar";
-import Header from "../../layouts/partner/Header";
+
 
 const BlogManagement = () => {
   const navigate = useNavigate();
-  const [blogs, setBlogs] = useState([]);
+  const [allBlogs, setAllBlogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
@@ -37,27 +37,19 @@ const BlogManagement = () => {
   const sortOptions = [
     { value: "-createdAt", label: "Mới nhất" },
     { value: "createdAt", label: "Cũ nhất" },
-    { value: "-views", label: "Nhiều lượt xem" },
-    { value: "-likesCount", label: "Nhiều lượt thích" },
     { value: "title", label: "Tên A-Z" },
     { value: "-title", label: "Tên Z-A" },
   ];
 
   useEffect(() => {
     fetchBlogs();
-  }, [filters]);
+  }, []);
 
   const fetchBlogs = async () => {
     try {
       setLoading(true);
-      const params = {};
-      if (filters.status) params.status = filters.status;
-      if (filters.category) params.category = filters.category;
-      if (filters.search) params.search = filters.search;
-      if (filters.sort) params.sort = filters.sort;
-
-      const response = await blogService.getMyBlogs(params);
-      setBlogs(response.data.data.blogs);
+      const response = await blogService.getMyBlogs();
+      setAllBlogs(response.data.data.blogs);
     } catch (error) {
       console.error("Lỗi khi tải danh sách blog:", error);
       alert("Không thể tải danh sách blog. Vui lòng thử lại!");
@@ -65,6 +57,48 @@ const BlogManagement = () => {
       setLoading(false);
     }
   };
+
+  // Filter và sort blogs ở FE
+  const getFilteredBlogs = () => {
+    let filtered = [...allBlogs];
+
+    // Filter by status
+    if (filters.status) {
+      filtered = filtered.filter(blog => blog.status === filters.status);
+    }
+
+    // Filter by category
+    if (filters.category) {
+      filtered = filtered.filter(blog => blog.category === filters.category);
+    }
+
+    // Filter by search
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter(blog =>
+        blog.title.toLowerCase().includes(searchLower) ||
+        blog.content.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      if (filters.sort === "-createdAt") {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      } else if (filters.sort === "createdAt") {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      } else if (filters.sort === "title") {
+        return a.title.localeCompare(b.title);
+      } else if (filters.sort === "-title") {
+        return b.title.localeCompare(a.title);
+      }
+      return 0;
+    });
+
+    return filtered;
+  };
+
+  const blogs = getFilteredBlogs();
 
   const handleDelete = async (id, title) => {
     if (window.confirm(`Bạn có chắc muốn xóa blog "${title}"?`)) {
@@ -130,7 +164,7 @@ const BlogManagement = () => {
 
       {/* Main Content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header />
+       
         
         <main className="flex-1 overflow-y-auto bg-white">
           {/* Hero Section */}
@@ -304,7 +338,7 @@ const BlogManagement = () => {
                         </button>
                       </div>
                     </div>
-
+   
                     {/* Content */}
                     <div className="p-6">
                       {/* Category & Date */}
@@ -323,21 +357,7 @@ const BlogManagement = () => {
                       </h3>
 
                       {/* Stats */}
-                      <div className="flex items-center gap-4 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
-                        <span className="flex items-center gap-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          {blog.views}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                          </svg>
-                          {blog.likesCount || 0}
-                        </span>
-                      </div>
+
 
                       {/* Actions */}
                       <div className="grid grid-cols-3 gap-2">

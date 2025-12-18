@@ -8,7 +8,7 @@ const Body = () => {
   useEffect(() => {
     const fetchTours = async () => {
       try {
-        const response = await fetch("http://localhost:9999/api/v1/tours/partner", {
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}tours/partner`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
@@ -60,14 +60,6 @@ const Body = () => {
           </h3>
         </div>
 
-        <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-6 shadow h-full text-center">
-          <h5 className="text-sm font-medium text-yellow-700 uppercase">
-            Tour đang chờ duyệt
-          </h5>
-          <h3 className="text-3xl font-bold text-yellow-700 mt-2">
-            {pendingTours} tour
-          </h3>
-        </div>
       </div>
 
       {/* Tour nổi bật */}

@@ -34,17 +34,40 @@ const bookingSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    status: {
+      type: String,
+      enum: ["pending", "confirmed", "cancelled"],
+      default: "pending",
+    },
+    cancelledAt: {
+      type: Date,
+    },
+    refundStatus: {
+      type: String,
+      enum: ["none", "pending", "processing", "completed", "failed"],
+      default: "none",
+    },
+    refundAmount: {
+      type: Number,
+      default: 0,
+    },
+    refundDate: {
+      type: Date,
+    },
+    momoTransId: {
+      type: String,
+    },
+    momoRequestId: {
+      type: String,
+    },
   },
   {
     versionKey: false,
   }
 );
 
-// Optional: populate user & tour when finding bookings
-bookingSchema.pre(/^find/, function (next) {
-  this.populate("tour").populate("user");
-  next();
-});
+// Không dùng auto-populate để tránh xung đột
+// Sẽ populate thủ công khi cần thiết trong controller
 
 const Booking = mongoose.model("Booking", bookingSchema);
 module.exports = Booking;

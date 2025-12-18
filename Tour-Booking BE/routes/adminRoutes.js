@@ -6,9 +6,10 @@ const {
   getActiveTours,
   getPendingTours,
   getOneActiveTour,
-  banUser,
+  
   getAllBlogs,
   getOneBlog,
+  toggleUserStatus,
   getAllBookings,
 } = require("./../controllers/adminController");
 const {
@@ -32,7 +33,8 @@ router.get("/all-bookings", getAllBookings);
 router.get("/pendingTour", getPendingTours);
 router.patch("/pendingTour/:tourId/approve", approveTour);
 router.get("/stats/view-new-user", getNewUsersAndPartners);
-router.patch("/users/:userId/ban", banUser);
+router.patch("/users/:userId/toggle-status", toggleUserStatus);
 router.get("/stats/revenue", getRevenueStats);
+router.get("/bookings", getAllBookings);
 
 module.exports = router;

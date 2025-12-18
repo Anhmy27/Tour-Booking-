@@ -5,6 +5,7 @@ const Booking = require("../models/bookingModel");
 const catchAsync = require("../utils/catchAsync");
 const AppError = require("../utils/appError");
 const momoUtils = require("../utils/momoUtils");
+const { calculateRefundAmount } = require("../utils/refundCalculator");
 
 exports.getCheckoutSession = catchAsync(async (req, res) => {
   const tour = await Tour.findById(req.body.tourId);
@@ -161,7 +162,7 @@ exports.getPartnerBookings = catchAsync(async (req, res) => {
 
 // MoMo Payment
 exports.createMoMoPayment = catchAsync(async (req, res, next) => {
-  const { tourId, numberOfPeople, startDate } = req.body;
+  const { tourId, numberOfPeople, startDate, bookingId } = req.body;
 
   if (!tourId || !numberOfPeople || !startDate) {
     return next(new AppError("Missing required fields", 400));
@@ -174,14 +175,40 @@ exports.createMoMoPayment = catchAsync(async (req, res, next) => {
 
   const totalAmount = tour.price * numberOfPeople;
 
-  const booking = await Booking.create({
-    tour: tourId,
-    user: req.user.id,
-    price: totalAmount,
-    numberOfPeople,
-    startDate,
-    paid: false,
-  });
+  let booking;
+  let isExistingBooking = false;
+
+  // Nếu có bookingId, sử dụng booking đã tồn tại (thanh toán lại)
+  if (bookingId) {
+    booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return next(new AppError("Booking not found", 404));
+    }
+
+    // Kiểm tra booking thuộc về user hiện tại
+    if (booking.user.toString() !== req.user.id.toString()) {
+      return next(
+        new AppError("You do not have permission to pay for this booking", 403)
+      );
+    }
+
+    // Kiểm tra booking đã thanh toán chưa
+    if (booking.paid) {
+      return next(new AppError("This booking has already been paid", 400));
+    }
+
+    isExistingBooking = true;
+  } else {
+    // Tạo booking mới nếu không có bookingId
+    booking = await Booking.create({
+      tour: tourId,
+      user: req.user.id,
+      price: totalAmount,
+      numberOfPeople,
+      startDate,
+      paid: false,
+    });
+  }
 
   const orderInfo = `Thanh toan tour ${tour.name}`;
   // Add timestamp to make orderId unique for retries
@@ -204,7 +231,10 @@ exports.createMoMoPayment = catchAsync(async (req, res, next) => {
       },
     });
   } catch (error) {
-    await Booking.findByIdAndDelete(booking._id);
+    // Chỉ xóa booking nếu là booking mới tạo
+    if (!isExistingBooking) {
+      await Booking.findByIdAndDelete(booking._id);
+    }
     return next(new AppError(`MoMo payment failed: ${error.message}`, 500));
   }
 });
@@ -215,21 +245,21 @@ exports.handleMoMoReturn = catchAsync(async (req, res, next) => {
 
   // Verify signature from MoMo
   const isValid = momoUtils.verifySignature(req.body);
-  
+
   if (!isValid) {
     console.error("❌ Invalid signature from MoMo");
     return next(new AppError("Invalid signature", 400));
   }
 
-  const { orderId, resultCode, message } = req.body;
+  const { orderId, resultCode, message, transId } = req.body;
 
   if (!orderId || resultCode === undefined) {
     return next(new AppError("Missing orderId or resultCode", 400));
   }
 
   // Extract bookingId from orderId (format: bookingId_timestamp)
-  const bookingId = orderId.split('_')[0];
-  
+  const bookingId = orderId.split("_")[0];
+
   const booking = await Booking.findById(bookingId);
   if (!booking) {
     console.error("❌ Booking not found:", bookingId);
@@ -238,26 +268,111 @@ exports.handleMoMoReturn = catchAsync(async (req, res, next) => {
 
   if (parseInt(resultCode) === 0) {
     booking.paid = true;
+    booking.status = "confirmed";
+    booking.momoTransId = transId; // Lưu transId để dùng cho refund
     await booking.save();
     console.log("✅ Payment successful:", orderId);
-    
+
     res.status(200).json({
       status: "success",
       message: "Payment confirmed",
-      data: { booking }
+      data: { booking },
     });
   } else {
     booking.paid = false;
     await booking.save();
     console.log("❌ Payment failed:", message);
-    
+
     res.status(200).json({
       status: "failed",
-      message: "Payment failed"
+      message: "Payment failed",
     });
   }
 });
 
+// Cancel Booking với refund
+exports.cancelBooking = catchAsync(async (req, res, next) => {
+  const booking = await Booking.findById(req.params.id);
 
+  if (!booking) {
+    return next(new AppError("Không tìm thấy booking", 404));
+  }
 
+  // Kiểm tra quyền: chỉ user tạo booking hoặc admin mới được hủy
+  if (booking.user.toString() !== req.user.id && req.user.role !== "admin") {
+    return next(new AppError("Bạn không có quyền hủy booking này", 403));
+  }
 
+  // Kiểm tra trạng thái hiện tại
+  if (booking.status === "cancelled") {
+    return next(new AppError("Booking đã được hủy trước đó", 400));
+  }
+
+  // Tính toán số tiền hoàn lại
+  const refundInfo = calculateRefundAmount(booking);
+
+  if (refundInfo.daysDiff < 0) {
+    return next(
+      new AppError("Không thể hủy booking sau khi tour đã bắt đầu", 400)
+    );
+  }
+
+  // Cập nhật trạng thái booking
+  booking.status = "cancelled";
+  booking.cancelledAt = Date.now();
+  booking.refundAmount = refundInfo.refundAmount;
+
+  // Nếu đã thanh toán và có tiền hoàn lại
+  if (booking.paid && refundInfo.refundAmount > 0) {
+    booking.refundStatus = "pending";
+
+    // Xử lý hoàn tiền qua MoMo
+    const refundResult = await momoUtils.processRefund(
+      booking,
+      refundInfo.refundAmount
+    );
+
+    if (refundResult.success) {
+      booking.refundStatus = "processing";
+      booking.refundDate = Date.now();
+
+      await booking.save();
+
+      return res.status(200).json({
+        status: "success",
+        message: `Đã hủy booking thành công. Bạn sẽ được hoàn ${refundInfo.refundPercentage}% (${refundInfo.refundAmount.toLocaleString("vi-VN")} VNĐ) về ví MoMo trong 3-5 ngày làm việc.`,
+        data: {
+          booking,
+          refundInfo,
+        },
+      });
+    } else {
+      booking.refundStatus = "failed";
+      await booking.save();
+
+      return res.status(500).json({
+        status: "fail",
+        message:
+          "Hủy booking thành công nhưng hoàn tiền thất bại. Vui lòng liên hệ hỗ trợ.",
+        data: {
+          booking,
+          refundError: refundResult.error,
+        },
+      });
+    }
+  } else {
+    await booking.save();
+
+    return res.status(200).json({
+      status: "success",
+      message:
+        refundInfo.refundAmount === 0
+          ? "Đã hủy booking. Không được hoàn tiền do hủy quá gần ngày tour."
+          : "Đã hủy booking thành công.",
+      data: {
+        booking,
+        refundInfo,
+      },
+    });
+  }
+});

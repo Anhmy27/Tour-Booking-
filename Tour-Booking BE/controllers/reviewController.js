@@ -23,7 +23,8 @@ exports.createReview = catchAsync(async (req, res, next) => {
 });
 
 exports.getTourReviews = catchAsync(async (req, res) => {
-  const reviews = await Review.find({ tour: req.params.tourId });
+  const reviews = await Review.find({ tour: req.params.tourId })
+    .populate("user", "name photo");
 
   res.status(200).json({
     status: "success",

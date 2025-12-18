@@ -29,9 +29,7 @@ export const useAuth = () => {
   };
 
   const handleLogout = async () => {
-    setIsLoading(true);
     await logout();
-    setIsLoading(false);
   };
 
   const handleSignUp = async (name, email, password, passwordConfirm) => {

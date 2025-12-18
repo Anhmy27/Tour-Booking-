@@ -17,7 +17,11 @@ const RevenueChart = () => {
 
   const fetchAnalytics = useCallback(async () => {
     try {
+<<<<<<< HEAD
       const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}reports/analytics`, {
+=======
+      const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL.replace('/api/v1/', '')}reports/analytics`, {
+>>>>>>> d5f8cd1d49a32ffc5cb33cf4d930953e0a596b25
         params: { year },
         withCredentials: true,
       });
