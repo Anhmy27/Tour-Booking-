@@ -105,6 +105,9 @@ exports.createBooking = catchAsync(async (req, res, next) => {
     price: totalPrice,
     paid: false,
     status: "pending",
+    price_snapshot: tour.price,
+    duration_snapshot: tour.duration,
+    tour_title_snapshot: tour.name,
   });
 
   res.status(201).json({
@@ -207,6 +210,9 @@ exports.createMoMoPayment = catchAsync(async (req, res, next) => {
       numberOfPeople,
       startDate,
       paid: false,
+      price_snapshot: tour.price,
+      duration_snapshot: tour.duration,
+      tour_title_snapshot: tour.name,
     });
   }
 
