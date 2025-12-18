@@ -24,7 +24,7 @@ const BookingDetailsTable = () => {
       };
 
       const res = await axios.get(
-        "http://localhost:9999/reports/booking-details",
+        `${process.env.REACT_APP_BACKEND_URL}reports/booking-details`,
         {
           params,
           withCredentials: true,

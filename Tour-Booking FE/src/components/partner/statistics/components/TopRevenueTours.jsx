@@ -12,7 +12,7 @@ const TopRevenueTours = () => {
     setLoading(true);
     try {
       const res = await axios.get(
-        "http://localhost:9999/reports/top-revenue-tours",
+        `${process.env.REACT_APP_BACKEND_URL}reports/top-revenue-tours`,
         {
           params: { month, year },
           withCredentials: true,
@@ -30,8 +30,6 @@ const TopRevenueTours = () => {
   useEffect(() => {
     fetchTopTours();
   }, [fetchTopTours]);
-
-  console.log("Top Tours:", topTours);
 
   if (loading) {
     return (

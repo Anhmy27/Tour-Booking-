@@ -5,6 +5,8 @@ const AppError = require("./../utils/appError");
 const { generateRandomPassword } = require("./../utils/passwordUtils");
 const { buildPaginatedQuery } = require("../utils/queryHelper");
 const Email = require("../utils/email");
+const Blog = require("../models/blogModel");
+const Booking = require("../models/bookingModel");
 
 const getAllUserForAdmin = catchAsync(async (req, res) => {
   const { role, status, page = 1, limit = 10 } = req.query;
@@ -122,6 +124,126 @@ const createPartnerAccount = catchAsync(async (req, res, next) => {
   });
 });
 
+const getOneActiveTour = catchAsync(async (req, res, next) => {
+  const { tourId } = req.params;
+  const tour = await Tour.findById(tourId).populate("partner", "name email");
+  if (!tour) {
+    return next(new AppError("Không tìm thấy tour", 404));
+  }
+  res.status(200).json({
+    status: "success",
+    data: {
+      tour,
+    },
+  });
+});
+
+const getActiveTours = catchAsync(async (req, res) => {
+  const { page = 1, limit = 10, partner } = req.query;
+
+  const { finalQuery, paginationOptions } = buildPaginatedQuery({
+    query: req.query,
+    filters: { status: "active", ...(partner && { partner }) },
+    searchFields: ["name", "summary"],
+    page,
+    limit,
+    sort: "-createdAt",
+  });
+  const [totalTours, tours] = await Promise.all([
+    Tour.countDocuments(finalQuery),
+    Tour.find(finalQuery)
+      .populate("partner", "name email")
+      .skip(paginationOptions.skip)
+      .limit(paginationOptions.limit)
+      .sort(paginationOptions.sort),
+  ]);
+
+  res.status(200).json({
+    status: "success",
+    results: tours.length,
+    total: totalTours,
+    currentPage: Number(page),
+    totalPages: Math.ceil(totalTours / limit),
+    data: { tours },
+  });
+});
+
+const getAllBlogs = catchAsync(async (req, res) => {
+  const { page = 1, limit = 10, partner, category, status } = req.query;
+
+  const { finalQuery, paginationOptions } = buildPaginatedQuery({
+    query: req.query,
+    filters: {
+      ...(status && { status }),
+      ...(category && { category }),
+      ...(partner && { partner }),
+    },
+    searchFields: ["title"],
+    page,
+    limit,
+    sort: "-createdAt",
+  });
+  const [totalBlogs, blogs] = await Promise.all([
+    Blog.countDocuments(finalQuery),
+    Blog.find(finalQuery)
+      .populate("author", "name email")
+      .skip(paginationOptions.skip)
+      .limit(paginationOptions.limit)
+      .sort(paginationOptions.sort),
+  ]);
+
+  res.status(200).json({
+    status: "success",
+    results: blogs.length,
+    total: totalBlogs,
+    currentPage: Number(page),
+    totalPages: Math.ceil(totalBlogs / limit),
+    data: { blogs },
+  });
+});
+
+const getOneBlog = catchAsync(async (req, res, next) => {
+  const { blogId } = req.params;
+  const blog = await Blog.findById(blogId).populate("author", "name email");
+  if (!blog) {
+    return next(new AppError("Không tìm thấy blog", 404));
+  }
+  res.status(200).json({
+    status: "success",
+    data: {
+      blog,
+    },
+  });
+});
+
+const getAllBookings = catchAsync(async (req, res, next) => {
+  const { year } = req.query;
+
+  try {
+
+  const bookings = await Booking.find({
+    ...(year && {
+      createdAt: {
+        $gte: new Date(`${year}-01-01`),
+        $lte: new Date(`${year}-12-31`),
+      },
+    }),
+  })
+    .populate("tour", "name")
+    .populate("user", "name email")
+    .sort("-createdAt");
+
+  res.status(200).json({
+    status: "success",
+    data: bookings,
+  });
+
+  } catch (error) {
+    console.log("error", error);
+    return next(new AppError("Có lỗi xảy ra khi lấy bookings", 500));
+  }
+});
+
 const getPendingTours = catchAsync(async (req, res) => {
   const { page = 1, limit = 10, partner } = req.query;
 
@@ -223,6 +345,11 @@ module.exports = {
   getAllUserForAdmin,
   createPartnerAccount,
   approveTour,
+  getOneActiveTour,
+  getActiveTours,
+  getAllBlogs,
+  getOneBlog,
+  getAllBookings,
   getPendingTours,
   banUser,
 };

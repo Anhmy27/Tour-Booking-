@@ -38,7 +38,7 @@ const LoginForm = () => {
       }
       switch (user.role?.trim().toLowerCase()) {
         case "admin":
-          navigate("/admin");
+          navigate("/admin/dashboard");
           break;
         case "customer":
           navigate("/");

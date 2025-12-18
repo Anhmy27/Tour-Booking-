@@ -17,6 +17,7 @@ import {
   Legend,
 } from "chart.js";
 import { Line } from "react-chartjs-2";
+import ExportExcelButton from "./ExportExcel/ExportExcelButton";
 
 ChartJS.register(
   CategoryScale,
@@ -132,6 +133,8 @@ const Dashboard = () => {
   const [revenueStats, setRevenueStats] = useState(null);
   const [timeRange, setTimeRange] = useState("1m");
   const [revenueRange, setRevenueRange] = useState("month");
+  const [revenueExcelData, setRevenueExcelData] = useState([]);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
   // Separate loading states
   const [userStatsLoading, setUserStatsLoading] = useState(true);
@@ -187,6 +190,35 @@ const Dashboard = () => {
     }
   }, [useCustomRevenueDate, revenueFromDate, revenueToDate, revenueRange]);
 
+  const fetchRevenue = useCallback(async () => {
+    try {
+      let url = `${process.env.REACT_APP_BACKEND_URL}admin/all-bookings?year=${selectedYear}`;
+      const response = await axios.get(url, { withCredentials: true });
+
+      const prepareData =
+        response.data?.data?.map((item, index) => {
+          return {
+            STT: index + 1,
+            "Tên chuyến đi": item?.tour?.name,
+            "Tóm tắt": item?.tour?.summary,
+            "Người đặt vé": item?.user?.name,
+            "Email người đặt": item?.user?.email,
+            "Giá tiền vé": item?.tour?.price,
+            "Số lượng vé": item?.numberOfPeople,
+            "Tổng giá tiền": item?.price,
+            "Ngày bắt đầu": new Date(item?.startDate).toLocaleDateString("vi-VN"),
+            "Trạng thái thanh toán": item?.paid
+              ? "Đã thanh toán"
+              : "Chưa thanh toán",
+            "Ngày tạo": new Date(item?.createdAt).toLocaleDateString("vi-VN"),
+          };
+        }) || [];
+      setRevenueExcelData(prepareData);
+    } catch (error) {
+      console.error("Error fetching revenue stats:", error);
+    }
+  }, [selectedYear]);
+
   useEffect(() => {
     fetchUserStats();
   }, [fetchUserStats]);
@@ -194,6 +226,10 @@ const Dashboard = () => {
   useEffect(() => {
     fetchRevenueStats();
   }, [fetchRevenueStats]);
+
+  useEffect(() => {
+    fetchRevenue();
+  }, [fetchRevenue]);
 
   const formatCurrency = useCallback((amount) => {
     return new Intl.NumberFormat("vi-VN", {
@@ -345,11 +381,34 @@ const Dashboard = () => {
 
   return (
     <div className="p-6">
-      <div className="mb-8">
+      <div className="mb-8 relative">
         <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
         <p className="mt-2 text-sm text-gray-700">
           Thống kê và phân tích dữ liệu hệ thống
         </p>
+        <div className="absolute top-0 right-0 flex items-center space-x-2">
+          Chọn năm:{" "}
+          <select
+            onChange={(e) => setSelectedYear(e.target.value)}
+            className="border ml-2 px-3 py-2 rounded"
+          >
+            {Array.from(
+              { length: new Date().getFullYear() - 2020 + 1 },
+              (_, i) => {
+                const year = new Date().getFullYear() - i;
+                return (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                );
+              }
+            )}
+          </select>
+          <ExportExcelButton
+            fileName={"Revenue report of year " + selectedYear}
+            data={revenueExcelData}
+          />
+        </div>
       </div>
 
       {/* Stats Grid */}

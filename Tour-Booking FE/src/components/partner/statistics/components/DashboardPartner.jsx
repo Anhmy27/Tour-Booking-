@@ -37,10 +37,11 @@ const DashboardPartner = () => {
   const fetchStats = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await axios.get("http://localhost:9999/reports/overview", {
+      const res = await axios.get(`${process.env.REACT_APP_BACKEND_URL}reports/overview`, {
         params: { month: selectedMonth, year: selectedYear },
         withCredentials: true,
       });
+      console.log("res", res.data)
       if (res.data.status === "success") {
         setStats(res.data.data);
       } else {

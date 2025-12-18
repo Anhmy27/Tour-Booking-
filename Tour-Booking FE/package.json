@@ -20,6 +20,7 @@
     "chart.js": "^4.5.0",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
+    "file-saver": "^2.0.5",
     "leaflet": "^1.9.4",
     "qrcode.react": "^4.2.0",
     "react": "^19.1.0",
@@ -34,7 +35,8 @@
     "react-scripts": "5.0.1",
     "recharts": "^2.15.3",
     "swiper": "^11.2.8",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^2.1.4",
+    "xlsx-js-style": "^1.2.0"
   },
   "scripts": {
     "start": "react-scripts start",

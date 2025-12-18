@@ -26,7 +26,16 @@ exports.getPartnerOverview = catchAsync(async (req, res, next) => {
   // 1. Lấy tất cả tour của partner
   const partnerTours = await Tour.find({ partner: partnerId });
   if (!partnerTours || partnerTours.length === 0) {
-    return next(new AppError("Không tìm thấy tour nào cho đối tác này.", 404));
+    return res.status(200).json({
+      status: "success",
+      data: {
+        totalRevenue: 0,
+        totalBookings: 0,
+        totalParticipants: 0,
+        activeToursCount: 0,
+        averageRevenuePerTour: 0,
+      },
+    });
   }
 
   const tourIds = partnerTours.map((t) => t._id);
@@ -249,7 +258,7 @@ exports.getBookingDetails = catchAsync(async (req, res, next) => {
   // Lấy danh sách tour thuộc partner
   const tours = await Tour.find({ partner: partnerId });
   if (!tours || tours.length === 0) {
-    return next(new AppError("Không tìm thấy tour nào cho đối tác này.", 404));
+    return next(new AppError("Không tìm thấy tour nào cho đối tác này.", 500));
   }
   const tourMap = {};
   tours.forEach((t) => (tourMap[t._id.toString()] = t));
