@@ -57,7 +57,7 @@ export default function CreatePartnerModal({ isOpen, onClose, onSuccess }) {
             </div>
             <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
               <h3 className="text-lg leading-6 font-medium text-gray-900">
-                Tạo tài khoản đối tác mới
+                Tạo tài khoản Manager mới
               </h3>
               <div className="mt-2">
                 <form onSubmit={handleSubmit} className="space-y-4">

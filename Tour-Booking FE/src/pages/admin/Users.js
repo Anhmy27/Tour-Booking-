@@ -226,7 +226,7 @@ export default function Users() {
             >
               <option value="">Tất cả vai trò</option>
               <option value="customer">Customer</option>
-              <option value="partner">Partner</option>
+              <option value="partner">Manager</option>
             </select>
           </div>
           <div className="relative">
