@@ -230,6 +230,30 @@ const getPendingTours = catchAsync(async (req, res) => {
     data: { tours },
   });
 });
+
+const getAllActiveTours = catchAsync(async (req, res) => {
+  const { partner, search } = req.query;
+
+  const filters = { status: "active", ...(partner && { partner }) };
+
+  if (search) {
+    filters.$or = [
+      { name: { $regex: search, $options: "i" } },
+      { summary: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  const tours = await Tour.find(filters)
+    .populate("partner", "name email")
+    .sort("-createdAt")
+    .lean();
+
+  res.status(200).json({
+    status: "success",
+    results: tours.length,
+    data: { tours },
+  });
+});
 const approveTour = catchAsync(async (req, res, next) => {
   const { tourId } = req.params;
   const { decision } = req.body;
@@ -396,13 +420,12 @@ const getAllBooking = catchAsync(async (req, res) => {
 module.exports = {
   getAllUserForAdmin,
   createPartnerAccount,
-  approveTour,
   getOneActiveTour,
   getActiveTours,
+  getAllActiveTours,
   getAllBlogs,
   getOneBlog,
   // export the paginated/filterable handler under the expected name
   getAllBookings: getAllBooking,
-  getPendingTours,
   toggleUserStatus,
 };

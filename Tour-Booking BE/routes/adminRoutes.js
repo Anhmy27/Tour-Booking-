@@ -2,11 +2,9 @@ const express = require("express");
 const {
   getAllUserForAdmin,
   createPartnerAccount,
-  approveTour,
   getActiveTours,
-  getPendingTours,
+  getAllActiveTours,
   getOneActiveTour,
-  
   getAllBlogs,
   getOneBlog,
   toggleUserStatus,
@@ -30,8 +28,9 @@ router.get("/activeTours/:tourId", getOneActiveTour);
 router.get("/blogs", getAllBlogs);
 router.get("/blogs/:blogId", getOneBlog);
 router.get("/all-bookings", getAllBookings);
-router.get("/pendingTour", getPendingTours);
-router.patch("/pendingTour/:tourId/approve", approveTour);
+// expose endpoint to get all active tours (for admin listing/filtering)
+router.get("/activeTours/all", getAllActiveTours);
+// Note: approve route removed — admin UI now only views/filters active tours
 router.get("/stats/view-new-user", getNewUsersAndPartners);
 router.patch("/users/:userId/toggle-status", toggleUserStatus);
 router.get("/stats/revenue", getRevenueStats);
