@@ -115,6 +115,13 @@ export default function Users() {
     }
   };
 
+  // Format role for display (show 'Manager' instead of 'partner')
+  const formatRole = (r) => {
+    if (!r) return "";
+    if (r === "partner") return "Manager";
+    return r.charAt(0).toUpperCase() + r.slice(1);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full p-4">
@@ -277,7 +284,7 @@ export default function Users() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-gray-500">{user.email}</td>
-                  <td className="px-6 py-4 text-gray-500">{user.role}</td>
+                  <td className="px-6 py-4 text-gray-500">{formatRole(user.role)}</td>
                   <td className="px-6 py-4">
                     <span
                       className={`px-2 inline-flex text-xs font-semibold rounded-full ${
