@@ -80,11 +80,9 @@ const BookingHistoryPage = () => {
     const confirmCancel = window.confirm(
       "Bạn có chắc chắn muốn hủy booking này?\n\n" +
         "Chính sách hoàn tiền:\n" +
-        "• ≥30 ngày trước tour: Hoàn 100%\n" +
-        "• ≥15 ngày: Hoàn 75%\n" +
-        "• ≥7 ngày: Hoàn 50%\n" +
+        "• ≥7 ngày trước tour: Hoàn 100%\n" +
         "• ≥3 ngày: Hoàn 25%\n" +
-        "• <3 ngày: Không hoàn tiền"
+        "• <1 ngày: Không hoàn tiền"
     );
 
     if (!confirmCancel) return;
@@ -152,7 +150,7 @@ const BookingHistoryPage = () => {
 
               <div className="flex-1">
                 <h2 className="text-xl font-semibold text-cyan-800">
-                  {booking.tour?.name}
+                  {booking.tour_title_snapshot || booking.tour?.name}
                 </h2>
 
                 <p className="text-sm text-gray-600 mt-1">
@@ -162,6 +160,23 @@ const BookingHistoryPage = () => {
 
                 <p className="text-sm text-gray-600 mt-1">
                   <strong>Số người tham gia:</strong> {booking.numberOfPeople}
+                </p>
+
+                {booking.duration_snapshot && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    <strong>Thời gian:</strong> {booking.duration_snapshot} ngày
+                  </p>
+                )}
+
+                <p className="text-sm text-gray-600 mt-1">
+                  <strong>Giá tour (1 người):</strong>{" "}
+                  <span className="text-gray-700">
+                    {(
+                      booking.price_snapshot ||
+                      booking.price / booking.numberOfPeople
+                    ).toLocaleString()}{" "}
+                    đ
+                  </span>
                 </p>
 
                 <p className="text-sm text-gray-600 mt-1">

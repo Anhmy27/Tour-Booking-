@@ -60,6 +60,15 @@ const bookingSchema = new mongoose.Schema(
     momoRequestId: {
       type: String,
     },
+    price_snapshot: {
+      type: Number,
+    },
+    duration_snapshot: {
+      type: Number,
+    },
+    tour_title_snapshot: {
+      type: String,
+    },
   },
   {
     versionKey: false,

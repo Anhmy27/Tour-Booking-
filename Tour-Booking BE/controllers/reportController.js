@@ -3,9 +3,13 @@ const Tour = require("../models/tourModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 
-// partner overview in specific month
-exports.getPartnerOverview = catchAsync(async (req, res, next) => {
-  const partnerId = req.user.id;
+/**
+ * Lấy thống kê tổng quan của quản lí trong tháng cụ thể
+ * @route GET /api/reports/overview
+ * @access Private/Manager
+ */
+exports.getManagerOverview = catchAsync(async (req, res, next) => {
+  const managerId = req.user.id;
 
   // Lấy month và year từ query params, nếu không có thì lấy tháng hiện tại
   const queryMonth = parseInt(req.query.month); // (1-12)
@@ -23,13 +27,13 @@ exports.getPartnerOverview = catchAsync(async (req, res, next) => {
   const startDate = new Date(year, month, 1);
   const endDate = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
-  // 1. Lấy tất cả tour của partner
-  const partnerTours = await Tour.find({ partner: partnerId });
-  if (!partnerTours || partnerTours.length === 0) {
-    return next(new AppError("Không tìm thấy tour nào cho đối tác này.", 404));
+  // 1. Lấy tất cả tour của quản lí
+  const managerTours = await Tour.find({ partner: managerId });
+  if (!managerTours || managerTours.length === 0) {
+    return next(new AppError("Không tìm thấy tour nào cho quản lí này.", 404));
   }
 
-  const tourIds = partnerTours.map((t) => t._id);
+  const tourIds = managerTours.map((t) => t._id);
 
   // 2. Lấy các booking đã thanh toán trong khoảng thời gian
   const bookings = await Booking.find({
@@ -51,14 +55,14 @@ exports.getPartnerOverview = catchAsync(async (req, res, next) => {
   );
 
   // 6. Số tour active (không giới hạn theo tháng)
-  const activeToursCount = partnerTours.filter(
+  const activeToursCount = managerTours.filter(
     (t) => t.status === "active"
   ).length;
 
   // 7. Doanh thu trung bình / tour
   const averageRevenuePerTour =
-    partnerTours.length > 0
-      ? Math.round(totalRevenue / partnerTours.length)
+    managerTours.length > 0
+      ? Math.round(totalRevenue / managerTours.length)
       : 0;
 
   return res.status(200).json({
@@ -77,9 +81,14 @@ exports.getPartnerOverview = catchAsync(async (req, res, next) => {
   });
 });
 
-// partner analytics
+/**
+ * Lấy thống kê phân tích của quản lí theo năm
+ * Bao gồm: doanh thu theo tháng, thống kê trạng thái tour
+ * @route GET /api/reports/analytics
+ * @access Private/Manager
+ */
 exports.getPartnerAnalytics = catchAsync(async (req, res, next) => {
-  const partnerId = req.user.id;
+  const managerId = req.user.id;
 
   const queryYear = parseInt(req.query.year);
   const now = new Date();
@@ -90,13 +99,13 @@ exports.getPartnerAnalytics = catchAsync(async (req, res, next) => {
   const startDate = new Date(year, 0, 1);
   const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
 
-  // Lấy các tour của partner
-  const partnerTours = await Tour.find({ partner: partnerId });
-  if (!partnerTours || partnerTours.length === 0) {
-    return next(new AppError("Không tìm thấy tour nào cho đối tác này.", 404));
+  // Lấy tất cả tour của quản lí
+  const managerTours = await Tour.find({ partner: managerId });
+  if (!managerTours || managerTours.length === 0) {
+    return next(new AppError("Không tìm thấy tour nào cho quản lí này.", 404));
   }
 
-  const tourIds = partnerTours.map((t) => t._id);
+  const tourIds = managerTours.map((t) => t._id);
 
   // Doanh thu theo tháng
   const bookings = await Booking.aggregate([
@@ -137,7 +146,7 @@ exports.getPartnerAnalytics = catchAsync(async (req, res, next) => {
     inactive: 0,
     pending: 0,
   };
-  partnerTours.forEach((tour) => {
+  managerTours.forEach((tour) => {
     if (tourStatusStats[tour.status] !== undefined) {
       tourStatusStats[tour.status]++;
     }
@@ -153,12 +162,17 @@ exports.getPartnerAnalytics = catchAsync(async (req, res, next) => {
   });
 });
 
-// top 5 tours by revenue
+/**
+ * Lấy top 5 tour có doanh thu cao nhất
+ * Có thể lọc theo tháng/năm
+ * @route GET /api/reports/top-tours
+ * @access Private/Manager
+ */
 exports.getTopRevenueTours = catchAsync(async (req, res, next) => {
-  const partnerId = req.user.id;
+  const managerId = req.user.id;
   const { month, year } = req.query;
 
-  // Parse and validate month/year
+  // Phân tích và xác thực month/year
   const m = parseInt(month);
   const y = parseInt(year);
 
@@ -169,10 +183,10 @@ exports.getTopRevenueTours = catchAsync(async (req, res, next) => {
     timeFilter = { createdAt: { $gte: startDate, $lte: endDate } };
   }
 
-  // Lấy danh sách tour của partner
-  const tours = await Tour.find({ partner: partnerId });
+  // Lấy danh sách tour của quản lí
+  const tours = await Tour.find({ partner: managerId });
   if (!tours || tours.length === 0) {
-    return next(new AppError("Không tìm thấy tour nào cho đối tác này.", 404));
+    return next(new AppError("Không tìm thấy tour nào cho quản lí này.", 404));
   }
   const tourIds = tours.map((t) => t._id);
 
@@ -231,9 +245,15 @@ exports.getTopRevenueTours = catchAsync(async (req, res, next) => {
   });
 });
 
-// Find all booking details
+/**
+ * Lấy chi tiết các booking của quản lí
+ * Hỗ trợ: filter theo tour, tháng/năm, trạng thái thanh toán, tìm kiếm
+ * Có phân trang
+ * @route GET /api/reports/bookings
+ * @access Private/Manager
+ */
 exports.getBookingDetails = catchAsync(async (req, res, next) => {
-  const partnerId = req.user.id;
+  const managerId = req.user.id;
   const {
     tour, // tourId cụ thể
     month,
@@ -246,16 +266,16 @@ exports.getBookingDetails = catchAsync(async (req, res, next) => {
 
   const skip = (page - 1) * limit;
 
-  // Lấy danh sách tour thuộc partner
-  const tours = await Tour.find({ partner: partnerId });
+  // Lấy danh sách tour thuộc quản lí
+  const tours = await Tour.find({ partner: managerId });
   if (!tours || tours.length === 0) {
-    return next(new AppError("Không tìm thấy tour nào cho đối tác này.", 404));
+    return next(new AppError("Không tìm thấy tour nào cho quản lí này.", 404));
   }
   const tourMap = {};
   tours.forEach((t) => (tourMap[t._id.toString()] = t));
   const tourIds = Object.keys(tourMap);
 
-  // Filter chính
+  // Xây dựng filter cho booking query
   const filter = {
     tour: { $in: tourIds },
   };
