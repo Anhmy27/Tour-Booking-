@@ -13,11 +13,7 @@ import {
   CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 
-// Hàm build URL đảm bảo có dấu "/" đúng
-const buildUrl = (path) => {
-  const base = process.env.REACT_APP_BACKEND_URL || "";
-  return `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
-};
+// Note: Use REACT_APP_BACKEND_URL from .env directly below for API calls
 
 // Format tiền VND
 const formatCurrency = (amount) => {
@@ -63,14 +59,21 @@ export default function Bookings() {
       if (endDate) params.append("endDate", endDate);
 
       const res = await axios.get(
-        buildUrl(`admin/bookings?${params.toString()}`),
+        `${process.env.REACT_APP_BACKEND_URL}admin/all-bookings?${params.toString()}`,
         { withCredentials: true }
       );
 
       if (res.data && res.data.status === "success") {
-        setBookings(res.data.data.bookings || []);
-        setTotal(res.data.total || 0);
-        setTotalPages(res.data.totalPages || 1);
+        const payload = res.data.data;
+        if (Array.isArray(payload)) {
+          setBookings(payload);
+          setTotal(payload.length || 0);
+          setTotalPages(1);
+        } else {
+          setBookings(payload?.bookings || []);
+          setTotal(res.data.total || payload?.total || 0);
+          setTotalPages(res.data.totalPages || payload?.totalPages || 1);
+        }
         console.log(res.data);
       } else {
         throw new Error("Không nhận được dữ liệu từ server");

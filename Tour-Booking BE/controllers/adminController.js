@@ -7,7 +7,7 @@ const { generateRandomPassword } = require("./../utils/passwordUtils");
 const { buildPaginatedQuery } = require("../utils/queryHelper");
 const Email = require("../utils/email");
 const Blog = require("../models/blogModel");
-const Booking = require("../models/bookingModel");
+// booking model already required above
 
 const getAllUserForAdmin = catchAsync(async (req, res) => {
   // Lấy tất cả users (không phải admin)
@@ -300,18 +300,39 @@ const toggleUserStatus = catchAsync(async (req, res, next) => {
   });
 });
 
-const getAllBookings = catchAsync(async (req, res) => {
+const getAllBooking = catchAsync(async (req, res) => {
   const { page = 1, limit = 10, paid, startDate, endDate } = req.query;
+
+  // Robust date parsing: accept ISO (yyyy-mm-dd) and localized dd/mm/yyyy
+  const parseDateParam = (s, endOfDay = false) => {
+    if (!s) return null;
+    let d = null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      d = new Date(s);
+    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) {
+      const [dd, mm, yyyy] = s.split("/");
+      d = new Date(`${yyyy}-${mm}-${dd}`);
+    } else {
+      d = new Date(s);
+    }
+    if (!d || isNaN(d.getTime())) return null;
+    if (endOfDay) d.setHours(23, 59, 59, 999);
+    else d.setHours(0, 0, 0, 0);
+    return d;
+  };
 
   // Tạo filter
   const filters = {};
   if (paid !== undefined) {
     filters.paid = paid === "true";
   }
-  if (startDate || endDate) {
+
+  const sd = parseDateParam(startDate, false);
+  const ed = parseDateParam(endDate, true);
+  if (sd || ed) {
     filters.startDate = {};
-    if (startDate) filters.startDate.$gte = new Date(startDate);
-    if (endDate) filters.startDate.$lte = new Date(endDate);
+    if (sd) filters.startDate.$gte = sd;
+    if (ed) filters.startDate.$lte = ed;
   }
 
   const { finalQuery, paginationOptions } = buildPaginatedQuery({
@@ -322,6 +343,10 @@ const getAllBookings = catchAsync(async (req, res) => {
     limit,
     sort: "-createdAt",
   });
+
+  // debug: log incoming query and computed filters
+  console.log("[admin/all-bookings] query:", { paid, startDate, endDate });
+  console.log("[admin/all-bookings] computed filters:", filters);
 
   const [totalBookings, bookings] = await Promise.all([
     Booking.countDocuments(finalQuery),
@@ -344,6 +369,15 @@ const getAllBookings = catchAsync(async (req, res) => {
       .sort(paginationOptions.sort),
   ]);
 
+  // debug: log matched booking startDates to inspect boundaries
+  try {
+    const startDates = bookings.map((b) => b.startDate && b.startDate.toISOString());
+    console.log("[admin/all-bookings] matched booking count:", bookings.length);
+    console.log("[admin/all-bookings] matched startDates:", startDates.slice(0, 10));
+  } catch (err) {
+    console.log("[admin/all-bookings] debug log error:", err);
+  }
+
   res.status(200).json({
     status: "success",
     results: bookings.length,
@@ -351,6 +385,11 @@ const getAllBookings = catchAsync(async (req, res) => {
     currentPage: Number(page),
     totalPages: Math.ceil(totalBookings / limit),
     data: { bookings },
+    debug: {
+      parsedStartDate: sd ? sd.toISOString() : null,
+      parsedEndDate: ed ? ed.toISOString() : null,
+      appliedFilters: filters,
+    },
   });
 });
 
@@ -362,8 +401,8 @@ module.exports = {
   getActiveTours,
   getAllBlogs,
   getOneBlog,
-  getAllBookings,
+  // export the paginated/filterable handler under the expected name
+  getAllBookings: getAllBooking,
   getPendingTours,
   toggleUserStatus,
-  getAllBookings,
 };
