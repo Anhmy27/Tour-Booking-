@@ -18,7 +18,7 @@ const navigation = [
   { name: "Dashboard", href: "/admin/dashboard", icon: HomeIcon },
   { name: "Manage Users", href: "/admin/users", icon: UserGroupIcon },
   { name: "Bookings", href: "/admin/bookings", icon: TicketIcon },
-  { name: "Pending Tours", href: "/admin/pending-tours", icon: ClockIcon },
+  { name: "Active Tours", href: "/admin/pending-tours", icon: ClockIcon },
   { name: "Blogs", href: "/admin/blogs", icon: DocumentTextIcon },
   { name: "Calendar", href: "/admin/calendar", icon: CalendarIcon },
   { name: "Chat", href: "/admin/chat", icon: ChatBubbleLeftIcon },
