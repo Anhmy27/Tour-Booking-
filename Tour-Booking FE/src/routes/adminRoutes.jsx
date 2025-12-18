@@ -29,8 +29,8 @@ const adminRoutes = {
     {
       path: "blogs/:id",
       element: <BlogDetailAdminPage />,
-    }
-    { path: "bookings", element: <Bookings /> },
+    },
+    { path: "bookings", element: <Bookings /> }
   ],
 };
 
