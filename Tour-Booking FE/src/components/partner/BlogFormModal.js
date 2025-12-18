@@ -48,12 +48,20 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (!file.type.startsWith("image/")) {
+  alert("Không phải file ảnh");
+  return;
+}
       if (file.size > 5 * 1024 * 1024) {
         alert("Kích thước ảnh không được vượt quá 5MB!");
         return;
       }
       setCoverImage(file);
       setPreviewImage(URL.createObjectURL(file));
+    }
+    else {
+      setCoverImage(null);
+      alert("đây ko phải file ảnh");
     }
   };
 
@@ -145,20 +153,26 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
               <span className="text-gray-500 text-xs ml-2">(Tối đa 5MB)</span>
             </label>
             <input
-              type="file"
+              type="input"
               accept="image/*"
+              
               onChange={handleImageChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
+
             {previewImage && (
               <div className="mt-4">
                 <img
                   src={previewImage}
-                  alt="Preview"
+                  alt="đây ko phải file ảnh"
                   className="w-full h-64 object-cover rounded-lg"
+              
                 />
+                
               </div>
+              
             )}
+            
           </div>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
