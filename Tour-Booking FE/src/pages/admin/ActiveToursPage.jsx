@@ -174,7 +174,7 @@ const ActiveToursPage = () => {
               <UserIcon className="w-6 h-6 text-blue-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Đối tác</p>
+              <p className="text-sm font-medium text-gray-600">Quản lý</p>
               <p className="text-2xl font-semibold text-gray-900">
                 {uniquePartners.length}
               </p>
@@ -242,7 +242,7 @@ const ActiveToursPage = () => {
                 }}
                 className="pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               >
-                <option value="">Tất cả đối tác</option>
+                <option value="">Tất cả quản lý</option>
                 {uniquePartners.map((p) => (
                   <option key={p?._id} value={p?._id}>
                     {p?.name}

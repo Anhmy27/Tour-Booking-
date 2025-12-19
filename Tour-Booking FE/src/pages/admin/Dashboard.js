@@ -196,7 +196,7 @@ const Dashboard = () => {
       const response = await axios.get(url, { withCredentials: true });
 
       const prepareData =
-        response.data?.data?.map((item, index) => {
+        response?.data?.data?.bookings?.map((item, index) => {
           return {
             STT: index + 1,
             "Tên chuyến đi": item?.tour?.name,
@@ -300,7 +300,7 @@ const Dashboard = () => {
         backgroundColor: "rgba(99, 102, 241, 0.5)",
       },
       {
-        label: "Đối tác",
+        label: "Quản lý",
         data: partnerData,
         borderColor: "rgb(16, 185, 129)",
         backgroundColor: "rgba(16, 185, 129, 0.5)",
@@ -420,7 +420,7 @@ const Dashboard = () => {
           loading={userStatsLoading}
         />
         <StatCard
-          title="Tổng đối tác"
+          title="Tổng quản lý"
           value={userStats?.data?.totals?.partner || 0}
           icon={UserIcon}
           loading={userStatsLoading}

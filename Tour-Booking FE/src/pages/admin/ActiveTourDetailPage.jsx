@@ -303,10 +303,10 @@ const ActiveTourDetailPage = () => {
             {/* Partner Information */}
             <div className="bg-white rounded-lg shadow-md p-6 mb-6 top-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">
-                Thông tin đối tác
+                Thông tin quản lý
               </h3>
               <div className="border-b border-gray-200 pb-4 mb-4">
-                <p className="text-sm text-gray-600">Tên đối tác</p>
+                <p className="text-sm text-gray-600">Tên quản lý</p>
                 <p className="text-lg font-semibold text-gray-900">
                   {tour.partner?.name}
                 </p>

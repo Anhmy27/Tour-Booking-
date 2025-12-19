@@ -110,6 +110,8 @@ const TopRevenueTours = () => {
       )}
     </div>
   );
+
+  
 };
 
 export default TopRevenueTours;

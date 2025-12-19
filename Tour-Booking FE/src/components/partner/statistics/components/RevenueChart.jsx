@@ -89,6 +89,8 @@ const RevenueChart = () => {
       </ResponsiveContainer>
     </div>
   );
+
+  
 };
 
 export default RevenueChart;

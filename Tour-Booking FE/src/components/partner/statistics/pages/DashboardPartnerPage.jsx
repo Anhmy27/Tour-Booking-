@@ -9,6 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import RevenueChart from "../components/RevenueChart";
 import TopRevenueTours from "../components/TopRevenueTours";
+import TopRatedTours from "../components/TopRatedTours";
 import BookingDetailsTable from "../components/BookingDetailsTable";
 import Sidebar from "../../../../layouts/partner/Sidebar";
 import Header from "../../../../layouts/partner/Header";
@@ -132,6 +133,7 @@ const DashboardPartnerPage = () => {
                 value={stats?.totalBookings ?? 0}
                 icon={ShoppingBagIcon}
               />
+ 
               <StatCard
                 title="Tổng người tham gia"
                 value={stats?.totalParticipants ?? 0}
@@ -159,6 +161,7 @@ const DashboardPartnerPage = () => {
 
           <RevenueChart />
           <TopRevenueTours />
+          <TopRatedTours />
           <BookingDetailsTable />
         </main>
       </div>

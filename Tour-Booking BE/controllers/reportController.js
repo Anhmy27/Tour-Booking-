@@ -1,5 +1,6 @@
 const Booking = require("../models/bookingModel");
 const Tour = require("../models/tourModel");
+const Review = require("../models/reviewModel");
 const catchAsync = require("./../utils/catchAsync");
 const AppError = require("./../utils/appError");
 
@@ -240,6 +241,36 @@ exports.getTopRevenueTours = catchAsync(async (req, res, next) => {
   });
 });
 
+
+
+
+// DEV ONLY: public endpoint for testing top-rated tours by partnerId query
+exports.getTopRatedToursPublic = catchAsync(async (req, res, next) => {
+  const partnerId = req.query.partnerId;
+  if (!partnerId) {
+    return next(new AppError("Vui lòng cung cấp partnerId trong query (dev only).", 400));
+  }
+
+  // Reuse logic from getTopRatedTours but using partnerId from query
+  const tours = await Tour.find({ partner: partnerId });
+  if (!tours || tours.length === 0) {
+    return res.status(200).json({ status: "success", results: 0, topRatedTours: [] });
+  }
+
+  const sorted = tours
+    .slice()
+    .sort((a, b) => (b.ratingsAverage || 0) - (a.ratingsAverage || 0))
+    .slice(0, 10)
+    .map((t) => ({
+      tourId: t._id,
+      name: t.name,
+      avgRating: t.ratingsAverage || 0,
+      reviewCount: t.ratingsQuantity || 0,
+    }));
+
+  res.status(200).json({ status: "success", results: sorted.length, topRatedTours: sorted });
+});
+
 // Find all booking details
 exports.getBookingDetails = catchAsync(async (req, res, next) => {
   const partnerId = req.user.id;
@@ -278,7 +309,7 @@ exports.getBookingDetails = catchAsync(async (req, res, next) => {
   if (month && year) {
     const from = new Date(year, month - 1, 1);
     const to = new Date(year, month, 0, 23, 59, 59, 999);
-    filter.startDate = { $gte: from, $lte: to };
+    filter.createdAt = { $gte: from, $lte: to };
   }
 
   // Lọc theo trạng thái thanh toán
