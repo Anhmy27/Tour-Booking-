@@ -58,10 +58,9 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
       }
       setCoverImage(file);
       setPreviewImage(URL.createObjectURL(file));
-    }
-    else {
+    } else {
       setCoverImage(null);
-      alert("đây ko phải file ảnh");
+      setPreviewImage("");
     }
   };
 
@@ -153,7 +152,7 @@ const BlogFormModal = ({ blog, onClose, onSuccess }) => {
               <span className="text-gray-500 text-xs ml-2">(Tối đa 5MB)</span>
             </label>
             <input
-              type="input"
+              type="file"
               accept="image/*"
               
               onChange={handleImageChange}
