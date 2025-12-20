@@ -194,9 +194,36 @@ const Dashboard = () => {
     try {
       let url = `${process.env.REACT_APP_BACKEND_URL}admin/all-bookings?year=${selectedYear}`;
       const response = await axios.get(url, { withCredentials: true });
+      // Defensive: backend may return different shapes. Inspect and normalize to array.
+      let list = [];
+      try {
+        // common: response.data.data is array
+        if (Array.isArray(response.data?.data)) {
+          list = response.data.data;
+        } else if (Array.isArray(response.data)) {
+          list = response.data;
+        } else if (response.data?.data && typeof response.data.data === "object") {
+          // might be { bookings: [...] }
+          const possible = response.data.data;
+          if (Array.isArray(possible.bookings)) list = possible.bookings;
+          else if (Array.isArray(possible.items)) list = possible.items;
+          else {
+            // unknown shape: log for debugging
+            console.warn("fetchRevenue: unexpected response.data.data shape:", response.data.data);
+            list = [];
+          }
+        } else {
+          console.warn("fetchRevenue: unexpected response shape:", response.data);
+          list = [];
+        }
+      } catch (err) {
+        console.warn("fetchRevenue: error normalizing response:", err, response.data);
+        list = [];
+      }
 
       const prepareData =
-        response?.data?.data?.bookings?.map((item, index) => {
+
+        list.map((item, index) => {
           return {
             STT: index + 1,
             "Tên chuyến đi": item?.tour?.name,
@@ -206,13 +233,12 @@ const Dashboard = () => {
             "Giá tiền vé": item?.tour?.price,
             "Số lượng vé": item?.numberOfPeople,
             "Tổng giá tiền": item?.price,
-            "Ngày bắt đầu": new Date(item?.startDate).toLocaleDateString("vi-VN"),
-            "Trạng thái thanh toán": item?.paid
-              ? "Đã thanh toán"
-              : "Chưa thanh toán",
-            "Ngày tạo": new Date(item?.createdAt).toLocaleDateString("vi-VN"),
+            "Ngày bắt đầu": item?.startDate ? new Date(item.startDate).toLocaleDateString("vi-VN") : "",
+            "Trạng thái thanh toán": item?.paid ? "Đã thanh toán" : "Chưa thanh toán",
+            "Ngày tạo": item?.createdAt ? new Date(item.createdAt).toLocaleDateString("vi-VN") : "",
           };
         }) || [];
+
       setRevenueExcelData(prepareData);
     } catch (error) {
       console.error("Error fetching revenue stats:", error);

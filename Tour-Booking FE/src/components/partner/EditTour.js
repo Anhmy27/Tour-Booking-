@@ -47,6 +47,17 @@ const EditTour = () => {
   const [dates, setDates] = useState([]);
   const navigate = useNavigate();
 
+  // Limit the number of selected start dates to maximum 30
+  const handleDatesChange = (value) => {
+    const arr = Array.isArray(value) ? value : [value];
+    if (arr.length > 30) {
+      alert("Số ngày khởi hành tối đa là 30. Các ngày vượt quá sẽ bị bỏ.");
+      setDates(arr.slice(0, 30));
+    } else {
+      setDates(arr);
+    }
+  };
+
   useEffect(() => {
     const price = parseFloat(formData.price) || 0;
     const discount = parseFloat(formData.priceDiscount) || 0;
@@ -133,7 +144,38 @@ const EditTour = () => {
         },
       }));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      // enforce numeric limits for certain fields
+      let newValue = value;
+      if (name === "duration" || name === "maxGroupSize") {
+        // integers
+        let n = parseInt(value, 10);
+        if (isNaN(n)) {
+          newValue = "";
+        } else {
+          if (name === "duration") {
+            if (n < 1) n = 1;
+            if (n > 30) n = 30;
+          }
+          if (name === "maxGroupSize") {
+            if (n < 1) n = 1;
+            if (n > 50) n = 50;
+          }
+          newValue = n;
+        }
+      }
+      if (name === "price" || name === "priceDiscount") {
+        // floats, non-negative; discount capped at 50, price capped at 100,000,000
+        let f = parseFloat(value);
+        if (isNaN(f)) newValue = "";
+        else {
+          if (f < 0) f = 0;
+          if (name === "priceDiscount" && f > 50) f = 50;
+          if (name === "price" && f > 100000000) f = 100000000;
+          newValue = f;
+        }
+      }
+
+      setFormData((prev) => ({ ...prev, [name]: newValue }));
     }
   };
 
@@ -180,64 +222,160 @@ const EditTour = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (dates.length > 30) {
+      alert("Số ngày khởi hành không được vượt quá 30 ngày.");
+      return;
+    }
+    // Field validations
+    const durationNum = parseInt(formData.duration, 10);
+    const maxGroupNum = parseInt(formData.maxGroupSize, 10);
+    const priceNum = parseFloat(formData.price);
+    const discountNum = parseFloat(formData.priceDiscount) || 0;
+
+    if (isNaN(durationNum) || durationNum < 1) {
+      alert("Thời gian (duration) phải là số >= 1 ngày.");
+      return;
+    }
+    if (durationNum > 30) {
+      alert("Thời gian (duration) không được vượt quá 30 ngày.");
+      return;
+    }
+    if (isNaN(maxGroupNum) || maxGroupNum < 1) {
+      alert("Số lượng tối đa (Group Size) phải là số nguyên >= 1.");
+      return;
+    }
+    if (maxGroupNum > 50) {
+      alert("Số lượng tối đa không được lớn hơn 50.");
+      return;
+    }
+    if (isNaN(priceNum) || priceNum < 0) {
+      alert("Giá (price) phải là số >= 0.");
+      return;
+    }
+    if (priceNum > 100000000) {
+      alert("Giá không được lớn hơn 100.000.000 VND.");
+      return;
+    }
+    if (isNaN(discountNum) || discountNum < 0) {
+      alert("Giảm giá (priceDiscount) phải là số >= 0.");
+      return;
+    }
+    if (discountNum > 50) {
+      alert("Giảm giá không được lớn hơn 50%.");
+      return;
+    }
     try {
-      const formDataToSend = new FormData();
+      const hasFiles = coverFile || (imageFiles && imageFiles.length > 0);
 
-      formDataToSend.append("name", formData.name);
-      formDataToSend.append("duration", formData.duration);
-      formDataToSend.append("maxGroupSize", formData.maxGroupSize);
-      formDataToSend.append("price", formData.price);
-      formDataToSend.append("priceDiscount", formData.priceDiscount);
-      formDataToSend.append("summary", formData.summary);
-      formDataToSend.append("description", formData.description);
-
-      if (coverFile) {
-        formDataToSend.append("imageCover", coverFile);
-      }
-
-      imageFiles.forEach((file) => {
-        formDataToSend.append("images", file);
-      });
-
-      dates.forEach((date) => {
-        formDataToSend.append("startDates[]", date.toDate().toISOString());
-      });
-
-      formDataToSend.append(
-        "startLocation",
-        JSON.stringify({
-          type: "Point",
-          coordinates: startLocationCoords,
-          address: formData.startLocation.address,
-          description: formData.startLocation.description,
+      // normalize dates to ISO strings
+      const normalizedDates = dates
+        .map((date) => {
+          try {
+            if (date && typeof date.toDate === "function") return date.toDate().toISOString();
+            if (date instanceof Date) return date.toISOString();
+            const parsed = new Date(date);
+            return isNaN(parsed) ? null : parsed.toISOString();
+          } catch (err) {
+            return null;
+          }
         })
-      );
+        .filter(Boolean);
 
-      formDataToSend.append(
-        "locations",
-        JSON.stringify(
-          locations.map((loc) => ({
+      if (!hasFiles) {
+        // send JSON body when no files to avoid multipart parsing issues
+        const payload = {
+          name: formData.name,
+          duration: formData.duration,
+          maxGroupSize: formData.maxGroupSize,
+          price: formData.price,
+          priceDiscount: formData.priceDiscount,
+          summary: formData.summary,
+          description: formData.description,
+          startDates: normalizedDates,
+          startLocation: {
+            type: "Point",
+            coordinates: startLocationCoords,
+            address: formData.startLocation.address,
+            description: formData.startLocation.description,
+          },
+          locations: locations.map((loc) => ({
             type: "Point",
             coordinates: loc.coordinates,
             address: loc.address,
             description: loc.description,
             day: loc.day,
-          }))
-        )
-      );
+          })),
+        };
 
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}tours/${id}`, {
-        method: "PATCH",
-        credentials: "include",
-        body: formDataToSend,
-      });
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}tours/${id}`, {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
 
-      const data = await response.json();
-      if (response.ok) {
-        alert("Cập nhật tour thành công!");
-        navigate("/partner/tours");
+        const data = await response.json();
+        if (response.ok) {
+          alert("Cập nhật tour thành công!");
+          navigate("/partner/tours");
+        } else {
+          alert(data.message || "Cập nhật thất bại!");
+        }
       } else {
-        alert(data.message || "Cập nhật thất bại!");
+        const formDataToSend = new FormData();
+
+        formDataToSend.append("name", formData.name);
+        formDataToSend.append("duration", formData.duration);
+        formDataToSend.append("maxGroupSize", formData.maxGroupSize);
+        formDataToSend.append("price", formData.price);
+        formDataToSend.append("priceDiscount", formData.priceDiscount);
+        formDataToSend.append("summary", formData.summary);
+        formDataToSend.append("description", formData.description);
+
+        if (coverFile) {
+          formDataToSend.append("imageCover", coverFile);
+        }
+
+        imageFiles.forEach((file) => {
+          formDataToSend.append("images", file);
+        });
+
+        normalizedDates.forEach((iso) => formDataToSend.append("startDates[]", iso));
+
+        // send JSON strings for nested objects (not Blob), so multer will treat as text fields
+        formDataToSend.append("startLocation", JSON.stringify({
+          type: "Point",
+          coordinates: startLocationCoords,
+          address: formData.startLocation.address,
+          description: formData.startLocation.description,
+        }));
+
+        formDataToSend.append(
+          "locations",
+          JSON.stringify(
+            locations.map((loc) => ({
+              type: "Point",
+              coordinates: loc.coordinates,
+              address: loc.address,
+              description: loc.description,
+              day: loc.day,
+            }))
+          )
+        );
+
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}tours/${id}`, {
+          method: "PATCH",
+          credentials: "include",
+          body: formDataToSend,
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          alert("Cập nhật tour thành công!");
+          navigate("/partner/tours");
+        } else {
+          alert(data.message || "Cập nhật thất bại!");
+        }
       }
     } catch (error) {
       console.error("Lỗi cập nhật tour:", error);
@@ -290,6 +428,8 @@ const EditTour = () => {
                 placeholder="Thời gian (số ngày)"
                 onChange={handleChange}
                 required
+                min={1}
+                max={30}
                 className={inputClass}
               />
               <input
@@ -299,6 +439,8 @@ const EditTour = () => {
                 type="number"
                 placeholder="Số lượng tối đa"
                 className={inputClass}
+                min={1}
+                max={50}
                 required
               />
               <input
@@ -308,6 +450,8 @@ const EditTour = () => {
                 type="number"
                 placeholder="Giá (VND)"
                 className={inputClass}
+                min={0}
+                max={100000000}
                 required
               />
               <input
@@ -317,6 +461,8 @@ const EditTour = () => {
                 type="number"
                 placeholder="Giảm giá (%)"
                 className={inputClass}
+                min={0}
+                max={50}
               />
 
               {/* Start Location Section */}
@@ -447,12 +593,13 @@ const EditTour = () => {
                 <div className="bg-white p-4 rounded-xl shadow w-fit">
                   <DatePicker
                     value={dates}
-                    onChange={setDates}
+                    onChange={handleDatesChange}
                     onlyCalendar
                     multiple
                     format="YYYY-MM-DD"
                     className="rmdp-prime custom-calendar"
                   />
+                  <p className="text-xs text-gray-500 mt-2">Tối đa 30 ngày khởi hành</p>
                 </div>
               </div>
 

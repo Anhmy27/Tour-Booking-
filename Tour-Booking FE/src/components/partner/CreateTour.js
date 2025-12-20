@@ -63,6 +63,12 @@ const CreateTour = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const clamp = (v, min, max) => {
+      const n = Number(v);
+      if (isNaN(n)) return "";
+      return String(Math.min(Math.max(n, min), max));
+    };
+
     if (name === "address" || name === "descriptionStart") {
       setFormData((prev) => ({
         ...prev,
@@ -72,8 +78,38 @@ const CreateTour = () => {
           coordinates: startLocationCoords,
         },
       }));
+      return;
+    }
+
+    // Clamp numeric fields to business rules
+    if (name === "duration") {
+      setFormData((prev) => ({ ...prev, duration: clamp(value, 1, 30) }));
+      return;
+    }
+    if (name === "maxGroupSize") {
+      setFormData((prev) => ({ ...prev, maxGroupSize: clamp(value, 1, 50) }));
+      return;
+    }
+    if (name === "price") {
+      setFormData((prev) => ({ ...prev, price: clamp(value, 0, 100000000) }));
+      return;
+    }
+    if (name === "priceDiscount") {
+      setFormData((prev) => ({ ...prev, priceDiscount: clamp(value, 0, 50) }));
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDatesChange = (newDates) => {
+    if (!newDates) return setDates([]);
+    const arr = Array.isArray(newDates) ? newDates : [newDates];
+    if (arr.length > 30) {
+      alert("Số ngày khởi hành tối đa là 30. Những mục thừa sẽ bị bỏ.");
+      setDates(arr.slice(0, 30));
     } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setDates(arr);
     }
   };
 
@@ -105,6 +141,31 @@ const CreateTour = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Client-side validations
+      const durationNum = Number(formData.duration) || 0;
+      const maxGroupSizeNum = Number(formData.maxGroupSize) || 0;
+      const priceNum = Number(formData.price) || 0;
+      const priceDiscountNum = Number(formData.priceDiscount) || 0;
+      if (durationNum < 1 || durationNum > 30) {
+        alert("Thời gian phải từ 1 đến 30 ngày");
+        return;
+      }
+      if (maxGroupSizeNum < 1 || maxGroupSizeNum > 50) {
+        alert("Số lượng tối đa phải từ 1 đến 50");
+        return;
+      }
+      if (priceNum < 0 || priceNum > 100000000) {
+        alert("Giá phải nằm trong khoảng 0 - 100,000,000 VND");
+        return;
+      }
+      if (priceDiscountNum < 0 || priceDiscountNum > 50) {
+        alert("Giảm giá phải từ 0% đến 50%");
+        return;
+      }
+      if (dates.length > 30) {
+        alert("Số ngày khởi hành tối đa là 30");
+        return;
+      }
       // Tạo FormData để gửi cả file và data
       const formDataToSend = new FormData();
       
@@ -127,9 +188,14 @@ const CreateTour = () => {
         formDataToSend.append("images", file);
       });
       
-      // Append startDates (array)
+      // Append startDates (array) with safe conversion
       dates.forEach((date) => {
-        formDataToSend.append("startDates[]", date.toDate().toISOString());
+        const iso = date && typeof date.toDate === 'function'
+          ? date.toDate().toISOString()
+          : date instanceof Date
+            ? date.toISOString()
+            : String(date);
+        formDataToSend.append("startDates[]", iso);
       });
       
       // Append startLocation (object as JSON string)
@@ -389,6 +455,8 @@ const CreateTour = () => {
                 placeholder="Thời gian (số ngày)"
                 onChange={handleChange}
                 required
+                min={1}
+                max={30}
                 className={inputClass}
               />
               <input
@@ -398,6 +466,8 @@ const CreateTour = () => {
                 type="number"
                 placeholder="Số lượng tối đa"
                 className={inputClass}
+                min={1}
+                max={50}
                 required
               />
               <input
@@ -407,6 +477,8 @@ const CreateTour = () => {
                 type="number"
                 placeholder="Giá (VND)"
                 className={inputClass}
+                min={0}
+                max={100000000}
                 required
               />
               <input
@@ -416,6 +488,8 @@ const CreateTour = () => {
                 type="number"
                 placeholder="Giảm giá (%)"
                 className={inputClass}
+                min={0}
+                max={50}
               />
 
               {/* Start Location Section */}
@@ -533,12 +607,13 @@ const CreateTour = () => {
                 <div className="bg-white p-4 rounded-xl shadow w-fit">
                   <DatePicker
                     value={dates}
-                    onChange={setDates}
+                    onChange={handleDatesChange}
                     onlyCalendar
                     multiple
                     format="YYYY-MM-DD"
                     className="rmdp-prime custom-calendar"
                   />
+                  <p className="text-xs text-gray-500 mt-2">Tối đa 30 ngày khởi hành.</p>
                 </div>
               </div>
 
