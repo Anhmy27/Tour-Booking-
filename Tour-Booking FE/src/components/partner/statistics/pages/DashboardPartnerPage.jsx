@@ -9,7 +9,7 @@ import {
 } from "@heroicons/react/24/outline";
 import RevenueChart from "../components/RevenueChart";
 import TopRevenueTours from "../components/TopRevenueTours";
-import TopRatedTours from "../components/TopRatedTours";
+
 import BookingDetailsTable from "../components/BookingDetailsTable";
 import Sidebar from "../../../../layouts/partner/Sidebar";
 import Header from "../../../../layouts/partner/Header";
@@ -161,7 +161,6 @@ const DashboardPartnerPage = () => {
 
           <RevenueChart />
           <TopRevenueTours />
-          <TopRatedTours />
           <BookingDetailsTable />
         </main>
       </div>
