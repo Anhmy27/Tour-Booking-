@@ -99,12 +99,12 @@ const CompanyProfile = () => {
             </button>
 
             <h2 className="text-3xl font-bold text-black mb-6">
-              👤 Hồ sơ Công Ty
+              👤 Hồ sơ Manager 
             </h2>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block font-medium mb-1">Tên Công Ty</label>
+                <label className="block font-medium mb-1">Tên </label>
                 <input
                   type="text"
                   name="name"
@@ -114,7 +114,7 @@ const CompanyProfile = () => {
                 />
               </div>
               <div>
-                <label className="block font-medium mb-1">Mô Tả Công Ty</label>
+                <label className="block font-medium mb-1">Mô Tả </label>
                 <textarea
                   name="description"
                   value={companyData.description}

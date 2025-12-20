@@ -20,10 +20,6 @@ const navigation = [
   { name: "Bookings", href: "/admin/bookings", icon: TicketIcon },
   { name: "Active Tours", href: "/admin/active-tours", icon: ClockIcon },
   { name: "Blogs", href: "/admin/blogs", icon: DocumentTextIcon },
-  { name: "Calendar", href: "/admin/calendar", icon: CalendarIcon },
-  { name: "Chat", href: "/admin/chat", icon: ChatBubbleLeftIcon },
-  { name: "Statistics", href: "/admin/statistics", icon: ChartBarIcon },
-  { name: "Settings", href: "/admin/settings", icon: Cog6ToothIcon },
 ];
 
 const AdminSidebar = ({ sidebarOpen, setSidebarOpen }) => {

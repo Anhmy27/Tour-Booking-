@@ -14,7 +14,7 @@ const tourSchema = new mongoose.Schema(
     slug: String,
     duration: {
       type: Number,
-      min: [2, "Chuyến tham quan phải kéo dài ít nhất 2 ngày"],
+      min: [1, "Chuyến tham quan phải kéo dài ít nhất 1 ngày"],
       required: [true, "Một chuyến tham quan phải có thời gian"],
     },
     maxGroupSize: {
